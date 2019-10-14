@@ -4,10 +4,12 @@ cc_binary {
         "amd8111e.c",
         "at76c50x-usb.c",
         "de2104x.c",
+        "dsa.c",
         "e100.c",
         "e1000.c",
         "et131x.c",
         "ethtool.c",
+        "fec.c",
         "fec_8xx.c",
         "fjes.c",
         "ibm_emac.c",
@@ -38,7 +40,7 @@ cc_binary {
         "-Wno-missing-field-initializers",
         "-Wno-pointer-arith",
         "-DPACKAGE=\"ethtool\"",
-        "-DVERSION=\"4.19\"",
+        "-DVERSION=\"5.2\"",
         "-std=gnu11",
     ]
 }
