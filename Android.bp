@@ -40,7 +40,7 @@ cc_binary {
         "-Wno-missing-field-initializers",
         "-Wno-pointer-arith",
         "-DPACKAGE=\"ethtool\"",
-        "-DVERSION=\"5.2\"",
+        "-DVERSION=\"5.3\"",
         "-std=gnu11",
     ]
 }
