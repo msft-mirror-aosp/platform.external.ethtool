@@ -36,9 +36,7 @@ cc_binary {
         "vmxnet3.c",
     ],
     cflags: [
-        "-Wno-unused-parameter",
         "-Wno-missing-field-initializers",
-        "-Wno-pointer-arith",
         "-DPACKAGE=\"ethtool\"",
         "-DVERSION=\"5.3\"",
         "-std=gnu11",
