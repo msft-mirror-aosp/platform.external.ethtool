@@ -76,5 +76,10 @@ cc_binary {
         "-Wno-missing-field-initializers",
         "-DPACKAGE=\"ethtool\"",
         "-DVERSION=\"5.3\"",
-    ]
+    ],
+    apex_available: [
+        "com.android.tethering",
+        "//apex_available:platform",
+    ],
+    min_sdk_version: "30",
 }
