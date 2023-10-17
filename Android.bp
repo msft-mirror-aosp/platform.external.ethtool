@@ -75,7 +75,7 @@ cc_binary {
     cflags: [
         "-Wno-missing-field-initializers",
         "-DPACKAGE=\"ethtool\"",
-        "-DVERSION=\"5.3\"",
+        "-DVERSION=\"5.4\"",
     ],
     apex_available: [
         "com.android.tethering",
