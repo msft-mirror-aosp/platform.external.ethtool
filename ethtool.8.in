@@ -113,7 +113,7 @@
 .  hy \\n(HY
 ..
 .
-.TH ETHTOOL 8 "January 2020" "Ethtool version @VERSION@"
+.TH ETHTOOL 8 "May 2020" "Ethtool version @VERSION@"
 .SH NAME
 ethtool \- query or control network driver and hardware settings
 .
@@ -128,6 +128,17 @@ ethtool \- query or control network driver and hardware settings
 .B ethtool \-h|\-\-help
 .HP
 .B ethtool \-\-version
+.HP
+.B ethtool
+.BN --debug
+.I args
+.HP
+.B ethtool \-\-monitor
+[
+.I command
+] [
+.I devname
+]
 .HP
 .B ethtool \-a|\-\-show\-pause
 .I devname
@@ -231,16 +242,21 @@ ethtool \- query or control network driver and hardware settings
 .I devname
 .BN speed
 .B2 duplex half full
-.B4 port tp aui bnc mii fibre
+.B4 port tp aui bnc mii fibre da
 .B3 mdix auto on off
 .B2 autoneg on off
-.BN advertise
+.RB [ advertise \ \fIN\fP[\fB/\fP\fIM\fP]
+|
+.BI advertise \ mode
+.A1 on off
+.RB ...]
 .BN phyad
 .B2 xcvr internal external
-.RB [ wol \ \*(WO]
+.RB [ wol \ \fIN\fP[\fB/\fP\fIM\fP]
+.RB | \ wol \ \*(WO]
 .RB [ sopass \ \*(MA]
 .RB [ msglvl
-.IR N \ |
+.IR N\fP[/\fIM\fP] \ |
 .BI msglvl \ type
 .A1 on off
 .RB ...]
@@ -437,6 +453,14 @@ Shows a short help message.
 .B \-\-version
 Shows the ethtool version number.
 .TP
+.BI \-\-debug \ N
+Turns on debugging messages. Argument is interpreted as a mask:
+.TS
+nokeep;
+lB	l.
+0x01  Parser information
+.TE
+.TP
 .B \-a \-\-show\-pause
 Queries the specified Ethernet device for pause parameter information.
 .TP
@@ -619,7 +643,7 @@ with just the device name as an argument will show you the supported device spee
 .A2 duplex half full
 Sets full or half duplex mode.
 .TP
-.A4 port tp aui bnc mii fibre
+.A4 port tp aui bnc mii fibre da
 Selects device port.
 .TP
 .A3 mdix auto on off
@@ -1231,6 +1255,20 @@ If queue_mask is not set, the sub command will be applied to all queues.
 .B sub_command
 Sub command to apply. The supported sub commands include --show-coalesce and
 --coalesce.
+.RE
+.TP
+.B \-\-monitor
+Listens to netlink notification and displays them.
+.RS 4
+.TP
+.I command
+If argument matching a command is used, ethtool only shows notifications of
+this type. Without such argument or with --all, all notification types are
+shown.
+.TP
+.I devname
+If a device name is used as argument, only notification for this device are
+shown. Default is to show notifications for all devices.
 .RE
 .SH BUGS
 Not supported (in part or whole) on all network drivers.
