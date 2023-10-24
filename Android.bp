@@ -81,5 +81,6 @@ cc_binary {
         "com.android.tethering",
         "//apex_available:platform",
     ],
+    installable: false,
     min_sdk_version: "30",
 }
