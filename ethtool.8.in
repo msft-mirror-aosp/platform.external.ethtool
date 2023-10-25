@@ -79,7 +79,7 @@
 .\"	\(*NC - Network Classifier type values
 .\"
 .ds NC \fBether\fP|\fBip4\fP|\fBtcp4\fP|\fBudp4\fP|\fBsctp4\fP|\fBah4\fP|\fBesp4\fP|\fBip6\fP|\fBtcp6\fP|\fBudp6\fP|\fBah6\fP|\fBesp6\fP|\fBsctp6\fP
-..
+.
 .\"
 .\" Start URL.
 .de UR
@@ -117,7 +117,7 @@
 .  hy \\n(HY
 ..
 .
-.TH ETHTOOL 8 "November 2021" "Ethtool version @VERSION@"
+.TH ETHTOOL 8 "December 2022" "Ethtool version @VERSION@"
 .SH NAME
 ethtool \- query or control network driver and hardware settings
 .
@@ -198,6 +198,9 @@ ethtool \- query or control network driver and hardware settings
 .BN rx\-mini
 .BN rx\-jumbo
 .BN tx
+.BN rx\-buf\-len
+.BN cqe\-size
+.BN tx\-push
 .HP
 .B ethtool \-i|\-\-driver
 .I devname
@@ -246,7 +249,7 @@ ethtool \- query or control network driver and hardware settings
 .RB [\fBeth\-phy\fP]
 .RB [\fBeth\-mac\fP]
 .RB [\fBeth\-ctrl\fP]
-.RN [\fBrmon\fP]
+.RB [\fBrmon\fP]
 .RB ]
 .HP
 .B ethtool \-\-phy\-statistics
@@ -417,12 +420,14 @@ ethtool \- query or control network driver and hardware settings
 .I devname
 .RB [ rx-copybreak ]
 .RB [ tx-copybreak ]
+.RB [ tx-buf-size ]
 .RB [ pfc-prevention-tout ]
 .HP
 .B ethtool \-\-set\-tunable
 .I devname
 .BN rx\-copybreak
 .BN tx\-copybreak
+.BN tx\-buf\-size
 .BN pfc\-prevention\-tout
 .HP
 .B ethtool \-\-reset
@@ -477,6 +482,14 @@ ethtool \- query or control network driver and hardware settings
 .HP
 .B ethtool \-\-show\-tunnels
 .I devname
+.HP
+.B ethtool \-\-show\-module
+.I devname
+.HP
+.B ethtool \-\-set\-module
+.I devname
+.RB [ power\-mode\-policy
+.BR high | auto ]
 .
 .\" Adjust lines (i.e. full justification) and hyphenate.
 .ad
@@ -559,6 +572,15 @@ Changes the number of ring entries for the Rx Jumbo ring.
 .TP
 .BI tx \ N
 Changes the number of ring entries for the Tx ring.
+.TP
+.BI rx\-buf\-len \ N
+Changes the size of a buffer in the Rx ring.
+.TP
+.BI cqe\-size \ N
+Changes the size of completion queue event.
+.TP
+.BI tx\-push \ on|off
+Specifies whether TX push should be enabled.
 .RE
 .TP
 .B \-i \-\-driver
@@ -673,7 +695,6 @@ naming of NIC- and driver-specific statistics across vendors.
 .RS 4
 .TP
 .B \fB\-\-all\-groups
-.E
 .TP
 .B \fB\-\-groups [\fBeth\-phy\fP] [\fBeth\-mac\fP] [\fBeth\-ctrl\fP] [\fBrmon\fP]
 Request groups of standard device statistics.
@@ -754,6 +775,7 @@ nokeep;
 lB	l	lB.
 0x001	10baseT Half
 0x002	10baseT Full
+0x100000000000000000000000	10baseT1L Full
 0x004	100baseT Half
 0x008	100baseT Full
 0x80000000000000000	100baseT1 Full
@@ -1306,6 +1328,9 @@ Get the current rx copybreak value in bytes.
 .B tx\-copybreak
 Get the current tx copybreak value in bytes.
 .TP
+.B tx\-buf\-size
+Get the current tx copybreak buffer size in bytes.
+.TP
 .B pfc\-prevention\-tout
 Get the current pfc prevention timeout value in msecs.
 .RE
@@ -1319,6 +1344,9 @@ Set the rx copybreak value in bytes.
 .TP
 .BI tx\-copybreak \ N
 Set the tx copybreak value in bytes.
+.TP
+.BI tx\-buf\-size \ N
+Set the tx copybreak buffer size in bytes.
 .TP
 .BI pfc\-prevention\-tout \ N
 Set pfc prevention timeout in msecs. Value of 0 means disable and 65535 means auto.
@@ -1406,7 +1434,7 @@ Sub command to apply. The supported sub commands include --show-coalesce and
 --coalesce.
 .RE
 .TP
-q.B \-\-cable\-test
+.B \-\-cable\-test
 Perform a cable test and report the results. What results are returned depends
 on the capabilities of the network interface. Typically open pairs and shorted
 pairs can be reported, along with pairs being O.K. When a fault is detected
@@ -1459,6 +1487,23 @@ shown. Default is to show notifications for all devices.
 Show tunnel-related device capabilities and state.
 List UDP ports kernel has programmed the device to parse as VxLAN,
 or GENEVE tunnels.
+.RE
+.TP
+.B \-\-show\-module
+Show the transceiver module's parameters.
+.RE
+.TP
+.B \-\-set\-module
+Set the transceiver module's parameters.
+.RS 4
+.TP
+.A2 power-mode-policy high auto
+Set the power mode policy for the module. When set to \fBhigh\fR, the module
+always operates at high power mode. When set to \fBauto\fR, the module is
+transitioned by the host to high power mode when the first port using it is put
+administratively up and to low power mode when the last port using it is put
+administratively down. The power mode policy can be set before a module is
+plugged-in.
 .RE
 .SH BUGS
 Not supported (in part or whole) on all network drivers.
