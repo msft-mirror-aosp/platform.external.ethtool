@@ -117,7 +117,7 @@
 .  hy \\n(HY
 ..
 .
-.TH ETHTOOL 8 "Dec 2020" "Ethtool version @VERSION@"
+.TH ETHTOOL 8 "November 2021" "Ethtool version @VERSION@"
 .SH NAME
 ethtool \- query or control network driver and hardware settings
 .
@@ -186,6 +186,8 @@ ethtool \- query or control network driver and hardware settings
 .BN tx\-usecs\-high
 .BN tx\-frames\-high
 .BN sample\-interval
+.B2 cqe\-mode\-rx on off
+.B2 cqe\-mode\-tx on off
 .HP
 .B ethtool \-g|\-\-show\-ring
 .I devname
@@ -240,6 +242,12 @@ ethtool \- query or control network driver and hardware settings
 .HP
 .B ethtool \-S|\-\-statistics
 .I devname
+.RB [\fB\-\-all\-groups\fP|\fB\-\-groups
+.RB [\fBeth\-phy\fP]
+.RB [\fBeth\-mac\fP]
+.RB [\fBeth\-ctrl\fP]
+.RN [\fBrmon\fP]
+.RB ]
 .HP
 .B ethtool \-\-phy\-statistics
 .I devname
@@ -251,6 +259,7 @@ ethtool \- query or control network driver and hardware settings
 .B ethtool \-s
 .I devname
 .BN speed
+.BN lanes
 .B2 duplex half full
 .B4 port tp aui bnc mii fibre da
 .B3 mdix auto on off
@@ -358,6 +367,9 @@ ethtool \- query or control network driver and hardware settings
 .B2 hex on off
 .BN offset
 .BN length
+.BN page
+.BN bank
+.BN i2c
 .HP
 .B ethtool \-\-show\-priv\-flags
 .I devname
@@ -651,8 +663,21 @@ Restarts auto-negotiation on the specified Ethernet device, if
 auto-negotiation is enabled.
 .TP
 .B \-S \-\-statistics
-Queries the specified network device for NIC- and driver-specific
-statistics.
+Queries the specified network device for standard (IEEE, IETF, etc.), or NIC-
+and driver-specific statistics. NIC- and driver-specific statistics are
+requested when no group of statistics is specified.
+
+NIC- and driver-specific statistics and standard statistics are independent,
+devices may implement either, both or none. There is little commonality between
+naming of NIC- and driver-specific statistics across vendors.
+.RS 4
+.TP
+.B \fB\-\-all\-groups
+.E
+.TP
+.B \fB\-\-groups [\fBeth\-phy\fP] [\fBeth\-mac\fP] [\fBeth\-ctrl\fP] [\fBrmon\fP]
+Request groups of standard device statistics.
+.RE
 .TP
 .B \-\-phy\-statistics
 Queries the specified network device for PHY specific statistics.
@@ -684,6 +709,9 @@ was specified.
 Set speed in Mb/s.
 .B ethtool
 with just the device name as an argument will show you the supported device speeds.
+.TP
+.BI lanes \ N
+Set number of lanes.
 .TP
 .A2 duplex half full
 Sets full or half duplex mode.
@@ -1150,6 +1178,17 @@ Changes the number of multi-purpose channels.
 Retrieves and if possible decodes the EEPROM from plugin modules, e.g SFP+, QSFP.
 If the driver and module support it, the optical diagnostic information is also
 read and decoded.
+When either one of
+.I page,
+.I bank
+or
+.I i2c
+parameters is specified, dumps only of a single page or its portion is
+allowed. In such a case
+.I offset
+and
+.I length
+parameters are treated relatively to EEPROM page boundaries.
 .TP
 .B \-\-show\-priv\-flags
 Queries the specified network device for its private flags.  The
