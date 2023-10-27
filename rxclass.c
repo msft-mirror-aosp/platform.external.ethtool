@@ -446,7 +446,7 @@ static int rmgr_find_empty_slot(struct rmgr_ctrl *rmgr,
 	 * If loc rolls over it should be greater than or equal to rmgr->size
 	 * and as such we know we have reached the end of the list.
 	 */
-	if (!~(rmgr->slot[slot_num] | (~1UL << rmgr->size % BITS_PER_LONG))) {
+	if (!~(rmgr->slot[slot_num] | (~1UL << loc % BITS_PER_LONG))) {
 		loc -= 1 + (loc % BITS_PER_LONG);
 		slot_num--;
 	}
@@ -598,7 +598,7 @@ int rxclass_rule_ins(struct cmd_context *ctx,
 	else if (loc & RX_CLS_LOC_SPECIAL)
 		printf("Added rule with ID %d\n", nfccmd.fs.location);
 
-	return 0;
+	return err;
 }
 
 int rxclass_rule_del(struct cmd_context *ctx, __u32 loc)
