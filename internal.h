@@ -23,7 +23,10 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 
-#define maybe_unused __attribute__((__unused__))
+#include "json_writer.h"
+#include "json_print.h"
+
+#define __maybe_unused __attribute__((__unused__))
 
 /* internal for netlink interface */
 #ifdef ETHTOOL_ENABLE_NETLINK
@@ -218,9 +221,11 @@ struct cmd_context {
 	const char *devname;	/* net device name */
 	int fd;			/* socket suitable for ethtool ioctl */
 	struct ifreq ifr;	/* ifreq suitable for ethtool ioctl */
-	int argc;		/* number of arguments to the sub-command */
+	unsigned int argc;	/* number of arguments to the sub-command */
 	char **argp;		/* arguments to the sub-command */
 	unsigned long debug;	/* debugging mask */
+	bool json;		/* Output JSON, if supported */
+	bool show_stats;	/* include command-specific stats */
 #ifdef ETHTOOL_ENABLE_NETLINK
 	struct nl_context *nlctx;	/* netlink context (opaque) */
 #endif
@@ -388,5 +393,11 @@ int dsa_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs);
 
 /* i.MX Fast Ethernet Controller */
 int fec_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs);
+
+/* Intel(R) Ethernet Controller I225-LM/I225-V adapter family */
+int igc_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs);
+
+/* Broadcom Ethernet Controller */
+int bnxt_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs);
 
 #endif /* ETHTOOL_INTERNAL_H__ */
