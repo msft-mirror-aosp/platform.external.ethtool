@@ -164,6 +164,7 @@ static const struct link_mode_info link_modes[] = {
 	[ETHTOOL_LINK_MODE_400000baseCR4_Full_BIT]	= __REAL(400000),
 	[ETHTOOL_LINK_MODE_100baseFX_Half_BIT]		= __HALF_DUPLEX(100),
 	[ETHTOOL_LINK_MODE_100baseFX_Full_BIT]		= __REAL(100),
+	[ETHTOOL_LINK_MODE_10baseT1L_Full_BIT]		= __REAL(10),
 };
 const unsigned int link_modes_count = ARRAY_SIZE(link_modes);
 
@@ -402,7 +403,7 @@ static int dump_our_modes(struct nl_context *nlctx, const struct nlattr *attr)
 		return ret;
 	printf("\tAdvertised auto-negotiation: %s\n", autoneg ? "Yes" : "No");
 
-	ret = dump_link_modes(nlctx, attr, true, LM_CLASS_FEC,
+	ret = dump_link_modes(nlctx, attr, false, LM_CLASS_FEC,
 			      "Advertised FEC modes: ", " ", "\n",
 			      "Not reported");
 	return ret;
@@ -593,6 +594,7 @@ static const char *const names_link_ext_state[] = {
 	[ETHTOOL_LINK_EXT_STATE_CALIBRATION_FAILURE]	= "Calibration failure",
 	[ETHTOOL_LINK_EXT_STATE_POWER_BUDGET_EXCEEDED]	= "Power budget exceeded",
 	[ETHTOOL_LINK_EXT_STATE_OVERHEAT]		= "Overheat",
+	[ETHTOOL_LINK_EXT_STATE_MODULE]			= "Module",
 };
 
 static const char *const names_autoneg_link_ext_substate[] = {
@@ -652,6 +654,11 @@ static const char *const names_cable_issue_link_ext_substate[] = {
 		"Cable test failure",
 };
 
+static const char *const names_module_link_ext_substate[] = {
+	[ETHTOOL_LINK_EXT_SUBSTATE_MODULE_CMIS_NOT_READY]	=
+		"CMIS module is not in ModuleReady state",
+};
+
 static const char *link_ext_substate_get(uint8_t link_ext_state_val, uint8_t link_ext_substate_val)
 {
 	switch (link_ext_state_val) {
@@ -674,6 +681,10 @@ static const char *link_ext_substate_get(uint8_t link_ext_state_val, uint8_t lin
 	case ETHTOOL_LINK_EXT_STATE_CABLE_ISSUE:
 		return get_enum_string(names_cable_issue_link_ext_substate,
 				       ARRAY_SIZE(names_cable_issue_link_ext_substate),
+				       link_ext_substate_val);
+	case ETHTOOL_LINK_EXT_STATE_MODULE:
+		return get_enum_string(names_module_link_ext_substate,
+				       ARRAY_SIZE(names_module_link_ext_substate),
 				       link_ext_substate_val);
 	default:
 		return NULL;
@@ -1183,8 +1194,9 @@ static int linkmodes_reply_advert_all_cb(const struct nlmsghdr *nlhdr,
 }
 
 /* For compatibility reasons with ioctl-based ethtool, when "autoneg on" is
- * specified without "advertise", "speed" and "duplex", we need to query the
- * supported link modes from the kernel and advertise all the "real" ones.
+ * specified without "advertise", "speed", "duplex" and "lanes", we need to
+ * query the supported link modes from the kernel and advertise all the "real"
+ * ones.
  */
 static int nl_sset_compat_linkmodes(struct nl_context *nlctx,
 				    struct nl_msg_buff *msgbuff)
@@ -1198,7 +1210,8 @@ static int nl_sset_compat_linkmodes(struct nl_context *nlctx,
 	if (ret < 0)
 		return ret;
 	if (!tb[ETHTOOL_A_LINKMODES_AUTONEG] || tb[ETHTOOL_A_LINKMODES_OURS] ||
-	    tb[ETHTOOL_A_LINKMODES_SPEED] || tb[ETHTOOL_A_LINKMODES_DUPLEX])
+	    tb[ETHTOOL_A_LINKMODES_SPEED] || tb[ETHTOOL_A_LINKMODES_DUPLEX] ||
+	    tb[ETHTOOL_A_LINKMODES_LANES])
 		return 0;
 	if (!mnl_attr_get_u8(tb[ETHTOOL_A_LINKMODES_AUTONEG]))
 		return 0;

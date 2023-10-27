@@ -1,3 +1,43 @@
+Version 6.1 - December 19, 2022
+	* Feature: update link mode tables
+	* Feature: register dump for NXP ENETC driver (-d)
+	* Feature: report TCP header-data split (-g)
+	* Feature: support new message types in pretty print
+	* Fix: fix compiler warnings
+	* Fix: man page syntax fixes
+
+Version 6.0 - October 10, 2022
+	* Fix: advertisement modes autoselection by lanes (-s)
+
+Version 5.19 - August 22, 2022
+	* Feature: get/set tx push (-g and -G)
+	* Feature: register dump support for TI CPSW (-d)
+	* Feature: register dump support for lan743x chipset (-d)
+	* Fix: fix missing sff-8472 output in netlink path (-m)
+	* Fix: fix EEPROM byte write (-E)
+
+Version 5.18 - June 14, 2022
+	* Feature: get/set cqe size (-g and -G)
+	* Fix: fix typo in man page
+	* Fix: fix help text alignment
+	* Fix: improve attribute label (--show-fec)
+
+Version 5.17 - April 4, 2022
+	* Feature: transceiver module power mode (--set-module)
+	* Feature: transceiver module extended state (--show-module)
+	* Feature: get/set rx buffer length (-g and -G)
+	* Feature: tx copybreak buffer size (--get-tunable and --set-tunable)
+	* Feature: JSON output for features (-k)
+	* Feature: support OSFP transceiver modules (-m)
+	* Fix: add missing free() calls (--get-tunable and --set-tunable)
+
+Version 5.16 - January 19, 2022
+	* Feature: use memory maps for module EEPROM parsing (-m)
+	* Feature: show CMIS diagnostic information (-m)
+	* Fix: fix dumping advertised FEC modes (--show-fec)
+	* Fix: ignore cable test notifications from other devices (--cable-test)
+	* Fix: do not show duplicate options in help text (--help)
+
 Version 5.15 - November 9, 2021
 	* Feature: new extended link substates for bad signal (no arg)
 	* Feature: coalesce cqe mode attributes (-c and -C)
