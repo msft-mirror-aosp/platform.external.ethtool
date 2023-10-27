@@ -351,7 +351,8 @@ static void find_mc_group(struct nl_context *nlctx, struct nlattr *nest)
 	}
 }
 
-static int family_info_cb(const struct nlmsghdr *nlhdr, void *data)
+static int __maybe_unused family_info_cb(const struct nlmsghdr *nlhdr,
+					 void *data)
 {
 	struct nl_context *nlctx = data;
 	struct nlattr *attr;
@@ -377,7 +378,8 @@ static int family_info_cb(const struct nlmsghdr *nlhdr, void *data)
 }
 
 #ifdef TEST_ETHTOOL
-static int get_genl_family(struct nl_context *nlctx, struct nl_socket *nlsk)
+static int get_genl_family(struct nl_context *nlctx __maybe_unused,
+			   struct nl_socket *nlsk __maybe_unused)
 {
 	return 0;
 }
@@ -452,14 +454,15 @@ static void netlink_done(struct cmd_context *ctx)
 /**
  * netlink_run_handler() - run netlink handler for subcommand
  * @ctx:         command context
+ * @nlchk:       netlink capability check
  * @nlfunc:      subcommand netlink handler to call
  * @no_fallback: there is no ioctl fallback handler
  *
  * This function returns only if ioctl() handler should be run as fallback.
  * Otherwise it exits with appropriate return code.
  */
-void netlink_run_handler(struct cmd_context *ctx, nl_func_t nlfunc,
-			 bool no_fallback)
+void netlink_run_handler(struct cmd_context *ctx, nl_chk_t nlchk,
+			 nl_func_t nlfunc, bool no_fallback)
 {
 	bool wildcard = ctx->devname && !strcmp(ctx->devname, WILDCARD_DEVNAME);
 	bool wildcard_unsupported, ioctl_fallback;
@@ -467,6 +470,10 @@ void netlink_run_handler(struct cmd_context *ctx, nl_func_t nlfunc,
 	const char *reason;
 	int ret;
 
+	if (nlchk && !nlchk(ctx)) {
+		reason = "ioctl-only request";
+		goto no_support;
+	}
 	if (ctx->devname && strlen(ctx->devname) >= ALTIFNAMSIZ) {
 		fprintf(stderr, "device name '%s' longer than %u characters\n",
 			ctx->devname, ALTIFNAMSIZ - 1);
