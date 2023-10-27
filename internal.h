@@ -21,7 +21,7 @@
 #include <unistd.h>
 #include <endian.h>
 #include <sys/ioctl.h>
-#include <net/if.h>
+#include <linux/if.h>
 
 #include "json_writer.h"
 #include "json_print.h"
@@ -384,15 +384,15 @@ int rxclass_rule_ins(struct cmd_context *ctx,
 int rxclass_rule_del(struct cmd_context *ctx, __u32 loc);
 
 /* Module EEPROM parsing code */
-void sff8079_show_all(const __u8 *id);
+void sff8079_show_all_ioctl(const __u8 *id);
+int sff8079_show_all_nl(struct cmd_context *ctx);
 
 /* Optics diagnostics */
 void sff8472_show_all(const __u8 *id);
 
 /* QSFP Optics diagnostics */
-void sff8636_show_all(const __u8 *id, __u32 eeprom_len);
-void sff8636_show_all_paged(const struct ethtool_module_eeprom *page_zero,
-			    const struct ethtool_module_eeprom *page_three);
+void sff8636_show_all_ioctl(const __u8 *id, __u32 eeprom_len);
+int sff8636_show_all_nl(struct cmd_context *ctx);
 
 /* FUJITSU Extended Socket network device */
 int fjes_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs);
@@ -406,10 +406,19 @@ int dsa_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs);
 /* i.MX Fast Ethernet Controller */
 int fec_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs);
 
+/* Freescale/NXP ENETC Ethernet Controller */
+int fsl_enetc_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs);
+
 /* Intel(R) Ethernet Controller I225-LM/I225-V adapter family */
 int igc_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs);
 
 /* Broadcom Ethernet Controller */
 int bnxt_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs);
+
+/* TI CPSW Ethernet Switch */
+int cpsw_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs);
+
+/* Microchip Ethernet Controller */
+int lan743x_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs);
 
 #endif /* ETHTOOL_INTERNAL_H__ */
