@@ -54,6 +54,22 @@ static bool __prefix_0x(const char *p)
 	return p[0] == '0' && (p[1] == 'x' || p[1] == 'X');
 }
 
+static float parse_float(const char *arg, float *result, float min,
+			 float max)
+{
+	char *endptr;
+	float val;
+
+	if (!arg || !arg[0])
+		return -EINVAL;
+	val = strtof(arg, &endptr);
+	if (*endptr || val < min || val > max)
+		return -EINVAL;
+
+	*result = val;
+	return 0;
+}
+
 static int __parse_u32(const char *arg, uint32_t *result, uint32_t min,
 		       uint32_t max, int base)
 {
@@ -139,8 +155,9 @@ static int lookup_u8(const char *arg, uint8_t *result,
 /* Parser handler for a flag. Expects a name (with no additional argument),
  * generates NLA_FLAG or sets a bool (if the name was present).
  */
-int nl_parse_flag(struct nl_context *nlctx, uint16_t type, const void *data,
-		  struct nl_msg_buff *msgbuff, void *dest)
+int nl_parse_flag(struct nl_context *nlctx __maybe_unused, uint16_t type,
+		  const void *data __maybe_unused, struct nl_msg_buff *msgbuff,
+		  void *dest)
 {
 	if (dest)
 		*(bool *)dest = true;
@@ -150,7 +167,8 @@ int nl_parse_flag(struct nl_context *nlctx, uint16_t type, const void *data,
 /* Parser handler for null terminated string. Expects a string argument,
  * generates NLA_NUL_STRING or fills const char *
  */
-int nl_parse_string(struct nl_context *nlctx, uint16_t type, const void *data,
+int nl_parse_string(struct nl_context *nlctx, uint16_t type,
+		    const void *data __maybe_unused,
 		    struct nl_msg_buff *msgbuff, void *dest)
 {
 	const char *arg = *nlctx->argp;
@@ -167,8 +185,8 @@ int nl_parse_string(struct nl_context *nlctx, uint16_t type, const void *data,
  * (may use 0x prefix), generates NLA_U32 or fills an uint32_t.
  */
 int nl_parse_direct_u32(struct nl_context *nlctx, uint16_t type,
-			const void *data, struct nl_msg_buff *msgbuff,
-			void *dest)
+			const void *data __maybe_unused,
+			struct nl_msg_buff *msgbuff, void *dest)
 {
 	const char *arg = *nlctx->argp;
 	uint32_t val;
@@ -191,8 +209,8 @@ int nl_parse_direct_u32(struct nl_context *nlctx, uint16_t type,
  * (may use 0x prefix), generates NLA_U32 or fills an uint32_t.
  */
 int nl_parse_direct_u8(struct nl_context *nlctx, uint16_t type,
-		       const void *data, struct nl_msg_buff *msgbuff,
-		       void *dest)
+		       const void *data __maybe_unused,
+		       struct nl_msg_buff *msgbuff, void *dest)
 {
 	const char *arg = *nlctx->argp;
 	uint8_t val;
@@ -211,10 +229,37 @@ int nl_parse_direct_u8(struct nl_context *nlctx, uint16_t type,
 	return (type && ethnla_put_u8(msgbuff, type, val)) ? -EMSGSIZE : 0;
 }
 
+/* Parser handler for float meters and convert it to cm. Generates
+ * NLA_U32 or fills an uint32_t.
+ */
+int nl_parse_direct_m2cm(struct nl_context *nlctx, uint16_t type,
+			 const void *data __maybe_unused,
+			 struct nl_msg_buff *msgbuff, void *dest)
+{
+	const char *arg = *nlctx->argp;
+	float meters;
+	uint32_t cm;
+	int ret;
+
+	nlctx->argp++;
+	nlctx->argc--;
+	ret = parse_float(arg, &meters, 0, 150);
+	if (ret < 0) {
+		parser_err_invalid_value(nlctx, arg);
+		return ret;
+	}
+
+	cm = (uint32_t)(meters * 100 + 0.5);
+	if (dest)
+		*(uint32_t *)dest = cm;
+	return (type && ethnla_put_u32(msgbuff, type, cm)) ? -EMSGSIZE : 0;
+}
+
 /* Parser handler for (tri-state) bool. Expects "name on|off", generates
  * NLA_U8 which is 1 for "on" and 0 for "off".
  */
-int nl_parse_u8bool(struct nl_context *nlctx, uint16_t type, const void *data,
+int nl_parse_u8bool(struct nl_context *nlctx, uint16_t type,
+		    const void *data __maybe_unused,
 		    struct nl_msg_buff *msgbuff, void *dest)
 {
 	const char *arg = *nlctx->argp;
@@ -421,8 +466,9 @@ err:
  * error_parser_params (error message, return value and number of extra
  * arguments to skip).
  */
-int nl_parse_error(struct nl_context *nlctx, uint16_t type, const void *data,
-		   struct nl_msg_buff *msgbuff, void *dest)
+int nl_parse_error(struct nl_context *nlctx, uint16_t type __maybe_unused,
+		   const void *data, struct nl_msg_buff *msgbuff __maybe_unused,
+		   void *dest __maybe_unused)
 {
 	const struct error_parser_data *parser_data = data;
 	unsigned int skip = parser_data->extra_args;
@@ -558,7 +604,7 @@ static int parse_numeric_bitset(struct nl_context *nlctx, uint16_t type,
 		parser_err_invalid_value(nlctx, arg);
 		return -EINVAL;
 	}
-	len1 = maskptr ? (maskptr - arg) : strlen(arg);
+	len1 = maskptr ? (unsigned int)(maskptr - arg) : strlen(arg);
 	nwords = DIV_ROUND_UP(len1, 8);
 	nbits = 0;
 
@@ -584,8 +630,10 @@ static int parse_numeric_bitset(struct nl_context *nlctx, uint16_t type,
 	}
 
 	value = calloc(nwords, sizeof(uint32_t));
-	if (!value)
+	if (!value) {
+		free(mask);
 		return -ENOMEM;
+	}
 	ret = __parse_num_string(arg, len1, value, force_hex1);
 	if (ret < 0) {
 		parser_err_invalid_value(nlctx, arg);
@@ -872,7 +920,7 @@ static void __parser_set(uint64_t *map, unsigned int idx)
 }
 
 struct tmp_buff {
-	struct nl_msg_buff	msgbuff;
+	struct nl_msg_buff	*msgbuff;
 	unsigned int		id;
 	unsigned int		orig_len;
 	struct tmp_buff		*next;
@@ -903,7 +951,12 @@ static struct tmp_buff *tmp_buff_find_or_create(struct tmp_buff **phead,
 	if (!new_buff)
 		return NULL;
 	new_buff->id = id;
-	msgbuff_init(&new_buff->msgbuff);
+	new_buff->msgbuff = malloc(sizeof(*new_buff->msgbuff));
+	if (!new_buff->msgbuff) {
+		free(new_buff);
+		return NULL;
+	}
+	msgbuff_init(new_buff->msgbuff);
 	new_buff->next = NULL;
 	*pbuff = new_buff;
 
@@ -917,7 +970,10 @@ static void tmp_buff_destroy(struct tmp_buff *head)
 
 	while (buff) {
 		next = buff->next;
-		msgbuff_done(&buff->msgbuff);
+		if (buff->msgbuff) {
+			msgbuff_done(buff->msgbuff);
+			free(buff->msgbuff);
+		}
 		free(buff);
 		buff = next;
 	}
@@ -932,13 +988,22 @@ static void tmp_buff_destroy(struct tmp_buff *head)
  *               param_parser::offset)
  * @group_style: defines if identifiers in .group represent separate messages,
  *               nested attributes or are not allowed
+ * @msgbuffs:    (only used for @group_style = PARSER_GROUP_MSG) array to store
+ *               pointers to composed messages; caller must make sure this
+ *               array is sufficient, i.e. that it has at least as many entries
+ *               as the number of different .group values in params array;
+ *               entries are filled from the start, remaining entries are not
+ *               modified; caller should zero initialize the array before
+ *               calling nl_parser()
  */
 int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
-	      void *dest, enum parser_group_style group_style)
+	      void *dest, enum parser_group_style group_style,
+	      struct nl_msg_buff **msgbuffs)
 {
 	struct nl_socket *nlsk = nlctx->ethnl_socket;
 	const struct param_parser *parser;
 	struct tmp_buff *buffs = NULL;
+	unsigned int n_msgbuffs = 0;
 	struct tmp_buff *buff;
 	unsigned int n_params;
 	uint64_t *params_seen;
@@ -956,20 +1021,20 @@ int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
 		buff = tmp_buff_find_or_create(&buffs, parser->group);
 		if (!buff)
 			goto out_free_buffs;
-		msgbuff = &buff->msgbuff;
+		msgbuff = buff->msgbuff;
+		ret = msg_init(nlctx, msgbuff, parser->group,
+			       NLM_F_REQUEST | NLM_F_ACK);
+		if (ret < 0)
+			goto out_free_buffs;
 
 		switch (group_style) {
 		case PARSER_GROUP_NEST:
 			ret = -EMSGSIZE;
-			nest = ethnla_nest_start(&buff->msgbuff, parser->group);
+			nest = ethnla_nest_start(buff->msgbuff, parser->group);
 			if (!nest)
 				goto out_free_buffs;
 			break;
 		case PARSER_GROUP_MSG:
-			ret = msg_init(nlctx, msgbuff, parser->group,
-				       NLM_F_REQUEST | NLM_F_ACK);
-			if (ret < 0)
-				goto out_free_buffs;
 			if (ethnla_fill_header(msgbuff,
 					       ETHTOOL_A_LINKINFO_HEADER,
 					       nlctx->devname, 0))
@@ -1014,17 +1079,24 @@ int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
 		buff = NULL;
 		if (parser->group)
 			buff = tmp_buff_find(buffs, parser->group);
-		msgbuff = buff ? &buff->msgbuff : &nlsk->msgbuff;
+		msgbuff = buff ? buff->msgbuff : &nlsk->msgbuff;
 
-		param_dest = dest ? (dest + parser->dest_offset) : NULL;
+		param_dest = dest ? ((char *)dest + parser->dest_offset) : NULL;
 		ret = parser->handler(nlctx, parser->type, parser->handler_data,
 				      msgbuff, param_dest);
 		if (ret < 0)
 			goto out_free;
 	}
 
+	if (group_style == PARSER_GROUP_MSG) {
+		ret = -EOPNOTSUPP;
+		for (buff = buffs; buff; buff = buff->next)
+			if (msgbuff_len(buff->msgbuff) > buff->orig_len &&
+			    netlink_cmd_check(nlctx->ctx, buff->id, false))
+				goto out_free;
+	}
 	for (buff = buffs; buff; buff = buff->next) {
-		struct nl_msg_buff *msgbuff = &buff->msgbuff;
+		struct nl_msg_buff *msgbuff = buff->msgbuff;
 
 		if (group_style == PARSER_GROUP_NONE ||
 		    msgbuff_len(msgbuff) == buff->orig_len)
@@ -1037,12 +1109,8 @@ int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
 				goto out_free;
 			break;
 		case PARSER_GROUP_MSG:
-			ret = nlsock_sendmsg(nlsk, msgbuff);
-			if (ret < 0)
-				goto out_free;
-			ret = nlsock_process_reply(nlsk, nomsg_reply_cb, NULL);
-			if (ret < 0)
-				goto out_free;
+			msgbuffs[n_msgbuffs++] = msgbuff;
+			buff->msgbuff = NULL;
 			break;
 		default:
 			break;

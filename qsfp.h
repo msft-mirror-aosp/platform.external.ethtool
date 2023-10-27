@@ -31,14 +31,6 @@
 #define	SFF8636_ID_OFFSET	0x00
 
 #define	SFF8636_REV_COMPLIANCE_OFFSET	0x01
-#define	 SFF8636_REV_UNSPECIFIED		0x00
-#define	 SFF8636_REV_8436_48			0x01
-#define	 SFF8636_REV_8436_8636			0x02
-#define	 SFF8636_REV_8636_13			0x03
-#define	 SFF8636_REV_8636_14			0x04
-#define	 SFF8636_REV_8636_15			0x05
-#define	 SFF8636_REV_8636_20			0x06
-#define	 SFF8636_REV_8636_27			0x07
 
 #define	SFF8636_STATUS_2_OFFSET	0x02
 /* Flat Memory:0- Paging, 1- Page 0 only */
@@ -495,6 +487,42 @@
 #define	 SFF8636_ETHERNET_100G_CLR4		0x17
 #define	 SFF8636_ETHERNET_100G_AOC2		0x18
 #define	 SFF8636_ETHERNET_100G_ACC2		0x19
+
+#define  SFF8636_ETHERNET_100GE_DWDM2        0x1A
+#define  SFF8636_ETHERNET_100G_1550NM_WDM    0x1B
+#define  SFF8636_ETHERNET_10G_BASET_SR       0x1C
+#define  SFF8636_ETHERNET_5G_BASET           0x1D
+#define  SFF8636_ETHERNET_2HALFG_BASET       0x1E
+#define  SFF8636_ETHERNET_40G_SWDM4          0x1F
+#define  SFF8636_ETHERNET_100G_SWDM4         0x20
+#define  SFF8636_ETHERNET_100G_PAM4_BIDI     0x21
+#define  SFF8636_ETHERNET_4WDM10_MSA         0x22
+#define  SFF8636_ETHERNET_4WDM20_MSA         0x23
+#define  SFF8636_ETHERNET_4WDM40_MSA         0x24
+#define  SFF8636_ETHERNET_100G_DR            0x25
+#define  SFF8636_ETHERNET_100G_FR_NOFEC      0x26
+#define  SFF8636_ETHERNET_100G_LR_NOFEC      0x27
+/*  28h-2Fh reserved */
+#define  SFF8636_ETHERNET_200G_ACC1          0x30
+#define  SFF8636_ETHERNET_200G_AOC1          0x31
+#define  SFF8636_ETHERNET_200G_ACC2          0x32
+#define  SFF8636_ETHERNET_200G_A0C2          0x33
+/*  34h-3Fh reserved */
+#define  SFF8636_ETHERNET_200G_CR4           0x40
+#define  SFF8636_ETHERNET_200G_SR4           0x41
+#define  SFF8636_ETHERNET_200G_DR4           0x42
+#define  SFF8636_ETHERNET_200G_FR4           0x43
+#define  SFF8636_ETHERNET_200G_PSM4          0x44
+#define  SFF8636_ETHERNET_50G_LR             0x45
+#define  SFF8636_ETHERNET_200G_LR4           0x46
+/*  47h-4Fh reserved */
+#define  SFF8636_ETHERNET_64G_EA             0x50
+#define  SFF8636_ETHERNET_64G_SW             0x51
+#define  SFF8636_ETHERNET_64G_LW             0x52
+#define  SFF8636_ETHERNET_128FC_EA           0x53
+#define  SFF8636_ETHERNET_128FC_SW           0x54
+#define  SFF8636_ETHERNET_128FC_LW           0x55
+/*  56h-5Fh reserved */
 
 #define	 SFF8636_OPTION_2_OFFSET	0xC1
 /* Rx output amplitude */

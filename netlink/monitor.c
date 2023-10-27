@@ -31,6 +31,42 @@ static struct {
 		.cmd	= ETHTOOL_MSG_DEBUG_NTF,
 		.cb	= debug_reply_cb,
 	},
+	{
+		.cmd	= ETHTOOL_MSG_FEATURES_NTF,
+		.cb	= features_reply_cb,
+	},
+	{
+		.cmd	= ETHTOOL_MSG_PRIVFLAGS_NTF,
+		.cb	= privflags_reply_cb,
+	},
+	{
+		.cmd	= ETHTOOL_MSG_RINGS_NTF,
+		.cb	= rings_reply_cb,
+	},
+	{
+		.cmd	= ETHTOOL_MSG_CHANNELS_NTF,
+		.cb	= channels_reply_cb,
+	},
+	{
+		.cmd	= ETHTOOL_MSG_COALESCE_NTF,
+		.cb	= coalesce_reply_cb,
+	},
+	{
+		.cmd	= ETHTOOL_MSG_PAUSE_NTF,
+		.cb	= pause_reply_cb,
+	},
+	{
+		.cmd	= ETHTOOL_MSG_EEE_NTF,
+		.cb	= eee_reply_cb,
+	},
+	{
+		.cmd	= ETHTOOL_MSG_CABLE_TEST_NTF,
+		.cb	= cable_test_ntf_cb,
+	},
+	{
+		.cmd	= ETHTOOL_MSG_CABLE_TEST_TDR_NTF,
+		.cb	= cable_test_tdr_ntf_cb,
+	},
 };
 
 static void clear_filter(struct nl_context *nlctx)
@@ -102,6 +138,42 @@ static struct monitor_option monitor_opts[] = {
 		.pattern	= "-s|--change",
 		.cmd		= ETHTOOL_MSG_DEBUG_NTF,
 	},
+	{
+		.pattern	= "-k|--show-features|--show-offload|-K|--features|--offload",
+		.cmd		= ETHTOOL_MSG_FEATURES_NTF,
+	},
+	{
+		.pattern	= "--show-priv-flags|--set-priv-flags",
+		.cmd		= ETHTOOL_MSG_PRIVFLAGS_NTF,
+	},
+	{
+		.pattern	= "-g|--show-ring|-G|--set-ring",
+		.cmd		= ETHTOOL_MSG_RINGS_NTF,
+	},
+	{
+		.pattern	= "-l|--show-channels|-L|--set-channels",
+		.cmd		= ETHTOOL_MSG_CHANNELS_NTF,
+	},
+	{
+		.pattern	= "-c|--show-coalesce|-C|--coalesce",
+		.cmd		= ETHTOOL_MSG_COALESCE_NTF,
+	},
+	{
+		.pattern	= "-a|--show-pause|-A|--pause",
+		.cmd		= ETHTOOL_MSG_PAUSE_NTF,
+	},
+	{
+		.pattern	= "--show-eee|--set-eee",
+		.cmd		= ETHTOOL_MSG_EEE_NTF,
+	},
+	{
+		.pattern	= "--cable-test",
+		.cmd		= ETHTOOL_MSG_CABLE_TEST_NTF,
+	},
+	{
+		.pattern	= "--cable-test-tdr",
+		.cmd		= ETHTOOL_MSG_CABLE_TEST_TDR_NTF,
+	},
 };
 
 static bool pattern_match(const char *s, const char *pattern)
@@ -167,16 +239,25 @@ static int parse_monitor(struct cmd_context *ctx)
 
 int nl_monitor(struct cmd_context *ctx)
 {
-	struct nl_context *nlctx = ctx->nlctx;
-	struct nl_socket *nlsk = nlctx->ethnl_socket;
-	uint32_t grpid = nlctx->ethnl_mongrp;
+	struct nl_context *nlctx;
+	struct nl_socket *nlsk;
+	uint32_t grpid;
 	bool is_dev;
 	int ret;
 
+	ret = netlink_init(ctx);
+	if (ret < 0) {
+		fprintf(stderr, "Netlink interface initialization failed, option --monitor not supported.\n");
+		return ret;
+	}
+	nlctx = ctx->nlctx;
+	nlsk = nlctx->ethnl_socket;
+	grpid = nlctx->ethnl_mongrp;
 	if (!grpid) {
 		fprintf(stderr, "multicast group 'monitor' not found\n");
 		return -EOPNOTSUPP;
 	}
+
 	if (parse_monitor(ctx) < 0)
 		return 1;
 	is_dev = ctx->devname && strcmp(ctx->devname, WILDCARD_DEVNAME);

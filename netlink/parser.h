@@ -111,6 +111,10 @@ int nl_parse_direct_u32(struct nl_context *nlctx, uint16_t type,
 int nl_parse_direct_u8(struct nl_context *nlctx, uint16_t type,
 		       const void *data, struct nl_msg_buff *msgbuff,
 		       void *dest);
+/* NLA_U32 represented as float number of meters, converted to cm. */
+int nl_parse_direct_m2cm(struct nl_context *nlctx, uint16_t type,
+			 const void *data, struct nl_msg_buff *msgbuff,
+			 void *dest);
 /* NLA_U8 represented as on | off */
 int nl_parse_u8bool(struct nl_context *nlctx, uint16_t type, const void *data,
 		    struct nl_msg_buff *msgbuff, void *dest);
@@ -139,6 +143,7 @@ int nl_parse_char_bitset(struct nl_context *nlctx, uint16_t type,
 
 /* main entry point called to parse the command line */
 int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
-	      void *dest, enum parser_group_style group_style);
+	      void *dest, enum parser_group_style group_style,
+	      struct nl_msg_buff **msgbuffs);
 
 #endif /* ETHTOOL_NETLINK_PARSER_H__ */
