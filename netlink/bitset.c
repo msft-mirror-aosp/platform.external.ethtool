@@ -50,12 +50,22 @@ bool bitset_get_bit(const struct nlattr *bitset, bool mask, unsigned int idx,
 	DECLARE_ATTR_TB_INFO(bitset_tb);
 	const struct nlattr *bits;
 	const struct nlattr *bit;
+	bool nomask;
 	int ret;
 
 	*retptr = 0;
 	ret = mnl_attr_parse_nested(bitset, attr_cb, &bitset_tb_info);
 	if (ret < 0)
 		goto err;
+
+	nomask = bitset_tb[ETHTOOL_A_BITSET_NOMASK];
+	if (mask && nomask) {
+		/* Trying to determine if a bit is set in the mask of a "no
+		 * mask" bitset doesn't make sense.
+		 */
+		ret = -EFAULT;
+		goto err;
+	}
 
 	bits = mask ? bitset_tb[ETHTOOL_A_BITSET_MASK] :
 		      bitset_tb[ETHTOOL_A_BITSET_VALUE];
@@ -87,7 +97,7 @@ bool bitset_get_bit(const struct nlattr *bitset, bool mask, unsigned int idx,
 
 		my_idx = mnl_attr_get_u32(tb[ETHTOOL_A_BITSET_BIT_INDEX]);
 		if (my_idx == idx)
-			return mask || tb[ETHTOOL_A_BITSET_BIT_VALUE];
+			return mask || nomask || tb[ETHTOOL_A_BITSET_BIT_VALUE];
 	}
 
 	return false;
@@ -151,6 +161,37 @@ err:
 	fprintf(stderr, "malformed netlink message (bitset)\n");
 	*retptr = ret;
 	return true;
+}
+
+static uint32_t *get_compact_bitset_attr(const struct nlattr *bitset,
+					 uint16_t type)
+{
+	const struct nlattr *tb[ETHTOOL_A_BITSET_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	unsigned int count;
+	int ret;
+
+	ret = mnl_attr_parse_nested(bitset, attr_cb, &tb_info);
+	if (ret < 0)
+		return NULL;
+	if (!tb[ETHTOOL_A_BITSET_SIZE] || !tb[ETHTOOL_A_BITSET_VALUE] ||
+	    !tb[type])
+		return NULL;
+	count = mnl_attr_get_u32(tb[ETHTOOL_A_BITSET_SIZE]);
+	if (8 * mnl_attr_get_payload_len(tb[type]) < count)
+		return NULL;
+
+	return mnl_attr_get_payload(tb[type]);
+}
+
+uint32_t *get_compact_bitset_value(const struct nlattr *bitset)
+{
+	return get_compact_bitset_attr(bitset, ETHTOOL_A_BITSET_VALUE);
+}
+
+uint32_t *get_compact_bitset_mask(const struct nlattr *bitset)
+{
+	return get_compact_bitset_attr(bitset, ETHTOOL_A_BITSET_MASK);
 }
 
 int walk_bitset(const struct nlattr *bitset, const struct stringset *labels,
