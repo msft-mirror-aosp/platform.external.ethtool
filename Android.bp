@@ -57,7 +57,7 @@ cc_binary {
         "-Wno-gnu-variable-sized-type-not-at-end",
         "-Wno-unused-parameter",
         "-DETHTOOL_ENABLE_NETLINK",
-        "-DETHTOOL_ENABLE_PRETTY_DUMP",
+        // causes a fair bit of binary bloat: "-DETHTOOL_ENABLE_PRETTY_DUMP",
         "-DPACKAGE=\"ethtool\"",
         "-DVERSION=\"6.5\"",
     ],
