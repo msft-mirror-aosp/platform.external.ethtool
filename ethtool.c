@@ -31,6 +31,7 @@
 
 #include "internal.h"
 #include <string.h>
+#include <strings.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -46,6 +47,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <linux/ioctl.h>
 #include <linux/sockios.h>
 #include <linux/netlink.h>
 
@@ -301,7 +303,7 @@ static void parse_generic_cmdline(struct cmd_context *ctx,
 				case CMDL_IP4: {
 					u32 *p = info[idx].wanted_val;
 					struct in_addr in;
-					if (!inet_aton(argp[i], &in))
+					if (!inet_pton(AF_INET, argp[i], &in))
 						exit_bad_args();
 					*p = in.s_addr;
 					break;
@@ -475,6 +477,7 @@ static void init_global_link_mode_masks(void)
 		ETHTOOL_LINK_MODE_400000baseCR4_Full_BIT,
 		ETHTOOL_LINK_MODE_100baseFX_Half_BIT,
 		ETHTOOL_LINK_MODE_100baseFX_Full_BIT,
+		ETHTOOL_LINK_MODE_10baseT1L_Full_BIT,
 	};
 	static const enum ethtool_link_mode_bit_indices
 		additional_advertised_flags_bits[] = {
@@ -715,6 +718,8 @@ static void dump_link_caps(const char *prefix, const char *an_prefix,
 		  "100baseFX/Half" },
 		{ 1, ETHTOOL_LINK_MODE_100baseFX_Full_BIT,
 		  "100baseFX/Full" },
+		{ 0, ETHTOOL_LINK_MODE_10baseT1L_Full_BIT,
+		  "10baseT1L/Full" },
 	};
 	int indent;
 	int did1, new_line_pend;
@@ -1129,6 +1134,10 @@ static const struct {
 	{ "fec", fec_dump_regs },
 	{ "igc", igc_dump_regs },
 	{ "bnxt_en", bnxt_dump_regs },
+	{ "cpsw-switch", cpsw_dump_regs },
+	{ "lan743x", lan743x_dump_regs },
+	{ "fsl_enetc", fsl_enetc_dump_regs },
+	{ "fsl_enetc_vf", fsl_enetc_dump_regs },
 };
 #endif
 
@@ -3527,11 +3536,15 @@ static int do_seeprom(struct cmd_context *ctx)
 		return 74;
 	}
 
-	if (seeprom_value_seen)
+	if (seeprom_value_seen && !seeprom_length_seen)
 		seeprom_length = 1;
-
-	if (!seeprom_length_seen)
+	else if (!seeprom_length_seen)
 		seeprom_length = drvinfo.eedump_len;
+
+	if (seeprom_value_seen && (seeprom_length != 1)) {
+		fprintf(stderr, "value requires length 1\n");
+		return 1;
+	}
 
 	if (drvinfo.eedump_len < seeprom_offset + seeprom_length) {
 		fprintf(stderr, "offset & length out of bounds\n");
@@ -4900,16 +4913,16 @@ static int do_getmodule(struct cmd_context *ctx)
 			switch (modinfo.type) {
 #ifdef ETHTOOL_ENABLE_PRETTY_DUMP
 			case ETH_MODULE_SFF_8079:
-				sff8079_show_all(eeprom->data);
+				sff8079_show_all_ioctl(eeprom->data);
 				break;
 			case ETH_MODULE_SFF_8472:
-				sff8079_show_all(eeprom->data);
+				sff8079_show_all_ioctl(eeprom->data);
 				sff8472_show_all(eeprom->data);
 				break;
 			case ETH_MODULE_SFF_8436:
 			case ETH_MODULE_SFF_8636:
-				sff8636_show_all(eeprom->data,
-						 modinfo.eeprom_len);
+				sff8636_show_all_ioctl(eeprom->data,
+						       modinfo.eeprom_len);
 				break;
 #endif
 			default:
@@ -5009,6 +5022,7 @@ tunable_strings[__ETHTOOL_TUNABLE_COUNT][ETH_GSTRING_LEN] = {
 	[ETHTOOL_ID_UNSPEC]		= "Unspec",
 	[ETHTOOL_RX_COPYBREAK]		= "rx-copybreak",
 	[ETHTOOL_TX_COPYBREAK]		= "tx-copybreak",
+	[ETHTOOL_TX_COPYBREAK_BUF_SIZE] = "tx-buf-size",
 	[ETHTOOL_PFC_PREVENTION_TOUT]	= "pfc-prevention-tout",
 };
 
@@ -5047,6 +5061,11 @@ static struct ethtool_tunable_info tunables_info[] = {
 	  .t_type_id	= ETHTOOL_TUNABLE_U16,
 	  .size		= sizeof(u16),
 	  .type		= CMDL_U16,
+	},
+	{ .t_id         = ETHTOOL_TX_COPYBREAK_BUF_SIZE,
+	  .t_type_id    = ETHTOOL_TUNABLE_U32,
+	  .size         = sizeof(u32),
+	  .type         = CMDL_U32,
 	},
 };
 #define TUNABLES_INFO_SIZE	ARRAY_SIZE(tunables_info)
@@ -5091,6 +5110,7 @@ static int do_stunable(struct cmd_context *ctx)
 		ret = send_ioctl(ctx, tuna);
 		if (ret) {
 			perror(tunable_strings[tuna->id]);
+			free(tuna);
 			return ret;
 		}
 		free(tuna);
@@ -5168,6 +5188,7 @@ static int do_gtunable(struct cmd_context *ctx)
 			ret = send_ioctl(ctx, tuna);
 			if (ret) {
 				fprintf(stderr, "%s: Cannot get tunable\n", ts);
+				free(tuna);
 				return ret;
 			}
 			print_tunable(tuna);
@@ -5559,7 +5580,7 @@ static int do_gfec(struct cmd_context *ctx)
 	}
 
 	fprintf(stdout, "FEC parameters for %s:\n", ctx->devname);
-	fprintf(stdout, "Configured FEC encodings:");
+	fprintf(stdout, "Supported/Configured FEC encodings:");
 	dump_fec(feccmd.fec);
 	fprintf(stdout, "\n");
 
@@ -5724,9 +5745,13 @@ static const struct option args[] = {
 			  "		[ rx-mini N ]\n"
 			  "		[ rx-jumbo N ]\n"
 			  "		[ tx N ]\n"
+			  "		[ rx-buf-len N]\n"
+			  "             [ cqe-size N]\n"
+			  "		[ tx-push on|off]\n"
 	},
 	{
 		.opts	= "-k|--show-features|--show-offload",
+		.json	= true,
 		.func	= do_gfeatures,
 		.nlfunc	= nl_gfeatures,
 		.help	= "Get state of protocol offload and other features"
@@ -5960,6 +5985,7 @@ static const struct option args[] = {
 		.help	= "Get tunable",
 		.xhelp	= "		[ rx-copybreak ]\n"
 			  "		[ tx-copybreak ]\n"
+			  "		[ tx-buf-size ]\n"
 			  "		[ pfc-precention-tout ]\n"
 	},
 	{
@@ -5968,6 +5994,7 @@ static const struct option args[] = {
 		.help	= "Set tunable",
 		.xhelp	= "		[ rx-copybreak N]\n"
 			  "		[ tx-copybreak N]\n"
+			  "		[ tx-buf-size N]\n"
 			  "		[ pfc-precention-tout N]\n"
 	},
 	{
@@ -6037,6 +6064,18 @@ static const struct option args[] = {
 		.opts	= "--show-tunnels",
 		.nlfunc	= nl_gtunnels,
 		.help	= "Show NIC tunnel offload information",
+	},
+	{
+		.opts	= "--show-module",
+		.json	= true,
+		.nlfunc	= nl_gmodule,
+		.help	= "Show transceiver module settings",
+	},
+	{
+		.opts	= "--set-module",
+		.nlfunc	= nl_smodule,
+		.help	= "Set transceiver module settings",
+		.xhelp	= "		[ power-mode-policy high|auto ]\n"
 	},
 	{
 		.opts	= "-h|--help",
