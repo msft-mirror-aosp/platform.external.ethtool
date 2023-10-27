@@ -58,6 +58,7 @@
 #include "internal.h"
 #include "sff-common.h"
 #include "qsfp.h"
+#include "qsfp-dd.h"
 
 #define MAX_DESC_SIZE	42
 
@@ -375,6 +376,107 @@ static void sff8636_show_transceiver(const __u8 *id)
 			printf("%s 100G Ethernet: 100G ACC or 25GAUI C2M ACC with worst BER of 10^(-12)\n",
 					pfx);
 			break;
+		case SFF8636_ETHERNET_100GE_DWDM2:
+			printf("%s 100GE-DWDM2 (DWDM transceiver using 2 wavelengths on a 1550 nm DWDM grid with a reach up to 80 km)\n",
+					pfx);
+			break;
+		case SFF8636_ETHERNET_100G_1550NM_WDM:
+			printf("%s 100G 1550nm WDM (4 wavelengths)\n", pfx);
+			break;
+		case SFF8636_ETHERNET_10G_BASET_SR:
+			printf("%s 10GBASE-T Short Reach (30 meters)\n", pfx);
+			break;
+		case SFF8636_ETHERNET_5G_BASET:
+			printf("%s 5GBASE-T\n", pfx);
+			break;
+		case SFF8636_ETHERNET_2HALFG_BASET:
+			printf("%s 2.5GBASE-T\n", pfx);
+			break;
+		case SFF8636_ETHERNET_40G_SWDM4:
+			printf("%s 40G SWDM4\n", pfx);
+			break;
+		case SFF8636_ETHERNET_100G_SWDM4:
+			printf("%s 100G SWDM4\n", pfx);
+			break;
+		case SFF8636_ETHERNET_100G_PAM4_BIDI:
+			printf("%s 100G PAM4 BiDi\n", pfx);
+			break;
+		case SFF8636_ETHERNET_4WDM10_MSA:
+			printf("%s 4WDM-10 MSA (10km version of 100G CWDM4 with same RS(528,514) FEC in host system)\n",
+					pfx);
+			break;
+		case SFF8636_ETHERNET_4WDM20_MSA:
+			printf("%s 4WDM-20 MSA (20km version of 100GBASE-LR4 with RS(528,514) FEC in host system)\n",
+					pfx);
+			break;
+		case SFF8636_ETHERNET_4WDM40_MSA:
+			printf("%s 4WDM-40 MSA (40km reach with APD receiver and RS(528,514) FEC in host system)\n",
+					pfx);
+			break;
+		case SFF8636_ETHERNET_100G_DR:
+			printf("%s 100GBASE-DR (clause 140), CAUI-4 (no FEC)\n", pfx);
+			break;
+		case SFF8636_ETHERNET_100G_FR_NOFEC:
+			 printf("%s 100G-FR or 100GBASE-FR1 (clause 140), CAUI-4 (no FEC)\n", pfx);
+			break;
+		case SFF8636_ETHERNET_100G_LR_NOFEC:
+			printf("%s 100G-LR or 100GBASE-LR1 (clause 140), CAUI-4 (no FEC)\n", pfx);
+			break;
+		case SFF8636_ETHERNET_200G_ACC1:
+			printf("%s Active Copper Cable with 50GAUI, 100GAUI-2 or 200GAUI-4 C2M. Providing a worst BER of 10-6 or below\n",
+					pfx);
+			break;
+		case SFF8636_ETHERNET_200G_AOC1:
+			printf("%s Active Optical Cable with 50GAUI, 100GAUI-2 or 200GAUI-4 C2M. Providing a worst BER of 10-6 or below\n",
+					pfx);
+			break;
+		case SFF8636_ETHERNET_200G_ACC2:
+			printf("%s Active Copper Cable with 50GAUI, 100GAUI-2 or 200GAUI-4 C2M. Providing a worst BER of 2.6x10-4 for ACC, 10-5 for AUI, or below\n",
+					pfx);
+			break;
+		case SFF8636_ETHERNET_200G_A0C2:
+			printf("%s Active Optical Cable with 50GAUI, 100GAUI-2 or 200GAUI-4 C2M. Providing a worst BER of 2.6x10-4 for ACC, 10-5 for AUI, or below\n",
+					pfx);
+			break;
+		case SFF8636_ETHERNET_200G_CR4:
+			printf("%s 50GBASE-CR, 100GBASE-CR2, or 200GBASE-CR4\n", pfx);
+			break;
+		case SFF8636_ETHERNET_200G_SR4:
+			printf("%s 50GBASE-SR, 100GBASE-SR2, or 200GBASE-SR4\n", pfx);
+			break;
+		case SFF8636_ETHERNET_200G_DR4:
+			printf("%s 50GBASE-FR or 200GBASE-DR4\n", pfx);
+			break;
+		case SFF8636_ETHERNET_200G_FR4:
+			printf("%s 200GBASE-FR4\n", pfx);
+			break;
+		case SFF8636_ETHERNET_200G_PSM4:
+			 printf("%s 200G 1550 nm PSM4\n", pfx);
+			break;
+		case SFF8636_ETHERNET_50G_LR:
+			printf("%s 50GBASE-LR\n", pfx);
+			break;
+		case SFF8636_ETHERNET_200G_LR4:
+			printf("%s 200GBASE-LR4\n", pfx);
+			break;
+		case SFF8636_ETHERNET_64G_EA:
+			printf("%s 64GFC EA\n", pfx);
+			break;
+		case SFF8636_ETHERNET_64G_SW:
+			printf("%s 64GFC SW\n", pfx);
+			break;
+		case SFF8636_ETHERNET_64G_LW:
+			printf("%s 64GFC LW\n", pfx);
+			break;
+		case SFF8636_ETHERNET_128FC_EA:
+			printf("%s 128GFC EA\n", pfx);
+			break;
+		case SFF8636_ETHERNET_128FC_SW:
+			printf("%s 128GFC SW\n", pfx);
+			break;
+		case SFF8636_ETHERNET_128FC_LW:
+			printf("%s 128GFC LW\n", pfx);
+			break;
 		default:
 			printf("%s (reserved or unknown)\n", pfx);
 			break;
@@ -478,9 +580,9 @@ static void sff8636_show_rate_identifier(const __u8 *id)
 			id[SFF8636_EXT_RS_OFFSET]);
 }
 
-static void sff8636_show_oui(const __u8 *id)
+static void sff8636_show_oui(const __u8 *id, int id_offset)
 {
-	sff8024_show_oui(id, SFF8636_VENDOR_OUI_OFFSET);
+	sff8024_show_oui(id, id_offset);
 }
 
 static void sff8636_show_wavelength_or_copper_compliance(const __u8 *id)
@@ -561,38 +663,7 @@ static void sff8636_show_wavelength_or_copper_compliance(const __u8 *id)
 
 static void sff8636_show_revision_compliance(const __u8 *id)
 {
-	static const char *pfx =
-		"\tRevision Compliance                       :";
-
-	switch (id[SFF8636_REV_COMPLIANCE_OFFSET]) {
-	case SFF8636_REV_UNSPECIFIED:
-		printf("%s Revision not specified\n", pfx);
-		break;
-	case SFF8636_REV_8436_48:
-		printf("%s SFF-8436 Rev 4.8 or earlier\n", pfx);
-		break;
-	case SFF8636_REV_8436_8636:
-		printf("%s SFF-8436 Rev 4.8 or earlier\n", pfx);
-		break;
-	case SFF8636_REV_8636_13:
-		printf("%s SFF-8636 Rev 1.3 or earlier\n", pfx);
-		break;
-	case SFF8636_REV_8636_14:
-		printf("%s SFF-8636 Rev 1.4\n", pfx);
-		break;
-	case SFF8636_REV_8636_15:
-		printf("%s SFF-8636 Rev 1.5\n", pfx);
-		break;
-	case SFF8636_REV_8636_20:
-		printf("%s SFF-8636 Rev 2.0\n", pfx);
-		break;
-	case SFF8636_REV_8636_27:
-		printf("%s SFF-8636 Rev 2.5/2.6/2.7\n", pfx);
-		break;
-	default:
-		printf("%s Unallocated\n", pfx);
-		break;
-	}
+	sff_show_revision_compliance(id, SFF8636_REV_COMPLIANCE_OFFSET);
 }
 
 /*
@@ -745,10 +816,15 @@ static void sff8636_show_dom(const __u8 *id, __u32 eeprom_len)
 
 		sff_show_thresholds(sd);
 	}
-
 }
+
 void sff8636_show_all(const __u8 *id, __u32 eeprom_len)
 {
+	if (id[SFF8636_ID_OFFSET] == SFF8024_ID_QSFP_DD) {
+		qsfp_dd_show_all(id);
+		return;
+	}
+
 	sff8636_show_identifier(id);
 	if ((id[SFF8636_ID_OFFSET] == SFF8024_ID_QSFP) ||
 		(id[SFF8636_ID_OFFSET] == SFF8024_ID_QSFP_PLUS) ||
@@ -773,7 +849,7 @@ void sff8636_show_all(const __u8 *id, __u32 eeprom_len)
 		sff8636_show_wavelength_or_copper_compliance(id);
 		sff_show_ascii(id, SFF8636_VENDOR_NAME_START_OFFSET,
 			       SFF8636_VENDOR_NAME_END_OFFSET, "Vendor name");
-		sff8636_show_oui(id);
+		sff8636_show_oui(id, SFF8636_VENDOR_OUI_OFFSET);
 		sff_show_ascii(id, SFF8636_VENDOR_PN_START_OFFSET,
 			       SFF8636_VENDOR_PN_END_OFFSET, "Vendor PN");
 		sff_show_ascii(id, SFF8636_VENDOR_REV_START_OFFSET,

@@ -168,30 +168,30 @@ static void debug_msg(struct nl_socket *nlsk, const void *msg, unsigned int len,
  *
  * Return: error code extracted from the message
  */
-static int nlsock_process_ack(struct nlmsghdr *nlhdr, ssize_t len,
+static int nlsock_process_ack(struct nlmsghdr *nlhdr, unsigned long len,
 			      unsigned int suppress_nlerr, bool pretty)
 {
 	const struct nlattr *tb[NLMSGERR_ATTR_MAX + 1] = {};
 	DECLARE_ATTR_TB_INFO(tb);
+	unsigned int err_offset = 0;
 	unsigned int tlv_offset;
 	struct nlmsgerr *nlerr;
 	bool silent;
 
-	if (len < NLMSG_HDRLEN + sizeof(*nlerr))
+	if ((len < NLMSG_HDRLEN + sizeof(*nlerr)) || (len < nlhdr->nlmsg_len))
 		return -EFAULT;
 	nlerr = mnl_nlmsg_get_payload(nlhdr);
-	silent = (!(nlhdr->nlmsg_flags & NLM_F_ACK_TLVS) ||
-		  suppress_nlerr >= 2 ||
-		  (suppress_nlerr && nlerr->error == -EOPNOTSUPP));
-	if (silent)
-		goto out;
+	silent = suppress_nlerr >= 2 ||
+		(suppress_nlerr && nlerr->error == -EOPNOTSUPP);
+	if (silent || !(nlhdr->nlmsg_flags & NLM_F_ACK_TLVS))
+		goto tlv_done;
 
 	tlv_offset = sizeof(*nlerr);
 	if (!(nlhdr->nlmsg_flags & NLM_F_CAPPED))
 		tlv_offset += MNL_ALIGN(mnl_nlmsg_get_payload_len(&nlerr->msg));
-
 	if (mnl_attr_parse(nlhdr, tlv_offset, attr_cb, &tb_info) < 0)
-		goto out;
+		goto tlv_done;
+
 	if (tb[NLMSGERR_ATTR_MSG]) {
 		const char *msg = mnl_attr_get_str(tb[NLMSGERR_ATTR_MSG]);
 
@@ -202,23 +202,20 @@ static int nlsock_process_ack(struct nlmsghdr *nlhdr, ssize_t len,
 				mnl_attr_get_u32(tb[NLMSGERR_ATTR_OFFS]));
 		fputc('\n', stderr);
 	}
+	if (tb[NLMSGERR_ATTR_OFFS])
+		err_offset = mnl_attr_get_u32(tb[NLMSGERR_ATTR_OFFS]);
 
-	if (nlerr->error && pretty) {
-		unsigned int err_offset = 0;
-
-		if (tb[NLMSGERR_ATTR_OFFS])
-			err_offset = mnl_attr_get_u32(tb[NLMSGERR_ATTR_OFFS]);
+tlv_done:
+	if (nlerr->error && !silent) {
+		errno = -nlerr->error;
+		perror("netlink error");
+	}
+	if (pretty && !(nlhdr->nlmsg_flags & NLM_F_CAPPED) &&
+	    nlhdr->nlmsg_len >= NLMSG_HDRLEN + nlerr->msg.nlmsg_len) {
 		fprintf(stderr, "offending message%s:\n",
 			err_offset ? " and attribute" : "");
 		pretty_print_genlmsg(&nlerr->msg, ethnl_umsg_desc,
 				     ethnl_umsg_n_desc, err_offset);
-	}
-
-out:
-	if (nlerr->error) {
-		errno = -nlerr->error;
-		if (!silent)
-			perror("netlink error");
 	}
 	return nlerr->error;
 }
@@ -258,12 +255,12 @@ int nlsock_process_reply(struct nl_socket *nlsk, mnl_cb_t reply_cb, void *data)
 
 		nlhdr = (struct nlmsghdr *)buff;
 		if (nlhdr->nlmsg_type == NLMSG_ERROR) {
-			bool silent = nlsk->nlctx->suppress_nlerr;
+			unsigned int suppress = nlsk->nlctx->suppress_nlerr;
 			bool pretty;
 
 			pretty = debug_on(nlsk->nlctx->ctx->debug,
 					  DEBUG_NL_PRETTY_MSG);
-			return nlsock_process_ack(nlhdr, len, silent, pretty);
+			return nlsock_process_ack(nlhdr, len, suppress, pretty);
 		}
 
 		msgbuff->nlhdr = nlhdr;
@@ -398,8 +395,11 @@ out_msgbuff:
  */
 void nlsock_done(struct nl_socket *nlsk)
 {
+	if (!nlsk)
+		return;
 	if (nlsk->sk)
 		mnl_socket_close(nlsk->sk);
 	msgbuff_done(&nlsk->msgbuff);
 	memset(nlsk, '\0', sizeof(*nlsk));
+	free(nlsk);
 }
