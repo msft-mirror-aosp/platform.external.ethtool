@@ -59,7 +59,7 @@ cc_binary {
         "-DETHTOOL_ENABLE_NETLINK",
         "-DETHTOOL_ENABLE_PRETTY_DUMP",
         "-DPACKAGE=\"ethtool\"",
-        "-DVERSION=\"5.15\"",
+        "-DVERSION=\"6.1\"",
     ],
     apex_available: [
         "com.android.tethering",
