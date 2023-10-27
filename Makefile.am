@@ -1,12 +1,13 @@
 AM_CFLAGS = -Wall
+AM_CPPFLAGS = -I$(top_srcdir)/uapi
 LDADD = -lm
 
 man_MANS = ethtool.8
 EXTRA_DIST = LICENSE ethtool.8 ethtool.spec.in aclocal.m4 ChangeLog autogen.sh
 
 sbin_PROGRAMS = ethtool
-ethtool_SOURCES = ethtool.c ethtool-copy.h internal.h net_tstamp-copy.h \
-		  rxclass.c
+ethtool_SOURCES = ethtool.c uapi/linux/ethtool.h internal.h \
+		  uapi/linux/net_tstamp.h rxclass.c common.c common.h
 if ETHTOOL_ENABLE_PRETTY_DUMP
 ethtool_SOURCES += \
 		  amd8111e.c de2104x.c dsa.c e100.c e1000.c et131x.c igb.c	\
@@ -20,6 +21,23 @@ endif
 if ENABLE_BASH_COMPLETION
 bashcompletiondir = $(BASH_COMPLETION_DIR)
 dist_bashcompletion_DATA = shell-completion/bash/ethtool
+endif
+
+if ETHTOOL_ENABLE_NETLINK
+ethtool_SOURCES += \
+		  netlink/netlink.c netlink/netlink.h netlink/extapi.h \
+		  netlink/msgbuff.c netlink/msgbuff.h netlink/nlsock.c \
+		  netlink/nlsock.h netlink/strset.c netlink/strset.h \
+		  netlink/monitor.c netlink/bitset.c netlink/bitset.h \
+		  netlink/settings.c netlink/parser.c netlink/parser.h \
+		  netlink/permaddr.c netlink/prettymsg.c netlink/prettymsg.h \
+		  netlink/desc-ethtool.c netlink/desc-genlctrl.c \
+		  netlink/desc-rtnl.c \
+		  uapi/linux/ethtool_netlink.h \
+		  uapi/linux/netlink.h uapi/linux/genetlink.h \
+		  uapi/linux/rtnetlink.h uapi/linux/if_link.h
+AM_CPPFLAGS += @MNL_CFLAGS@
+LDADD += @MNL_LIBS@
 endif
 
 TESTS = test-cmdline test-features
