@@ -58,10 +58,6 @@
 #define MAX_ADDR_LEN	32
 #endif
 
-#ifndef NETLINK_GENERIC
-#define NETLINK_GENERIC	16
-#endif
-
 #define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
 
 static void exit_bad_args(void) __attribute__((noreturn));
@@ -478,6 +474,15 @@ static void init_global_link_mode_masks(void)
 		ETHTOOL_LINK_MODE_100baseFX_Half_BIT,
 		ETHTOOL_LINK_MODE_100baseFX_Full_BIT,
 		ETHTOOL_LINK_MODE_10baseT1L_Full_BIT,
+		ETHTOOL_LINK_MODE_800000baseCR8_Full_BIT,
+		ETHTOOL_LINK_MODE_800000baseKR8_Full_BIT,
+		ETHTOOL_LINK_MODE_800000baseDR8_Full_BIT,
+		ETHTOOL_LINK_MODE_800000baseDR8_2_Full_BIT,
+		ETHTOOL_LINK_MODE_800000baseSR8_Full_BIT,
+		ETHTOOL_LINK_MODE_800000baseVR8_Full_BIT,
+		ETHTOOL_LINK_MODE_10baseT1S_Full_BIT,
+		ETHTOOL_LINK_MODE_10baseT1S_Half_BIT,
+		ETHTOOL_LINK_MODE_10baseT1S_P2MP_Half_BIT,
 	};
 	static const enum ethtool_link_mode_bit_indices
 		additional_advertised_flags_bits[] = {
@@ -720,6 +725,24 @@ static void dump_link_caps(const char *prefix, const char *an_prefix,
 		  "100baseFX/Full" },
 		{ 0, ETHTOOL_LINK_MODE_10baseT1L_Full_BIT,
 		  "10baseT1L/Full" },
+		{ 0, ETHTOOL_LINK_MODE_800000baseCR8_Full_BIT,
+		  "800000baseCR8/Full" },
+		{ 0, ETHTOOL_LINK_MODE_800000baseKR8_Full_BIT,
+		  "800000baseKR8/Full" },
+		{ 0, ETHTOOL_LINK_MODE_800000baseDR8_Full_BIT,
+		  "800000baseDR8/Full" },
+		{ 0, ETHTOOL_LINK_MODE_800000baseDR8_2_Full_BIT,
+		  "800000baseDR8_2/Full" },
+		{ 0, ETHTOOL_LINK_MODE_800000baseSR8_Full_BIT,
+		  "800000baseSR8/Full" },
+		{ 0, ETHTOOL_LINK_MODE_800000baseVR8_Full_BIT,
+		  "800000baseVR8/Full" },
+		{ 0, ETHTOOL_LINK_MODE_10baseT1S_Full_BIT,
+		  "10baseT1S/Full" },
+		{ 1, ETHTOOL_LINK_MODE_10baseT1S_Half_BIT,
+		  "10baseT1S/Half" },
+		{ 0, ETHTOOL_LINK_MODE_10baseT1S_P2MP_Half_BIT,
+		  "10baseT1S/Half" },
 	};
 	int indent;
 	int did1, new_line_pend;
@@ -1138,6 +1161,7 @@ static const struct {
 	{ "lan743x", lan743x_dump_regs },
 	{ "fsl_enetc", fsl_enetc_dump_regs },
 	{ "fsl_enetc_vf", fsl_enetc_dump_regs },
+	{ "hns3", hns3_dump_regs },
 };
 #endif
 
@@ -3882,27 +3906,6 @@ static int do_grxclass(struct cmd_context *ctx)
 	return err ? 1 : 0;
 }
 
-static void print_indir_table(struct cmd_context *ctx,
-			      struct ethtool_rxnfc *ring_count,
-			      u32 indir_size, u32 *indir)
-{
-	u32 i;
-
-	printf("RX flow hash indirection table for %s with %llu RX ring(s):\n",
-	       ctx->devname, ring_count->data);
-
-	if (!indir_size)
-		printf("Operation not supported\n");
-
-	for (i = 0; i < indir_size; i++) {
-		if (i % 8 == 0)
-			printf("%5u: ", i);
-		printf(" %5u", indir[i]);
-		if (i % 8 == 7 || i == indir_size - 1)
-			fputc('\n', stdout);
-	}
-}
-
 static int do_grxfhindir(struct cmd_context *ctx,
 			 struct ethtool_rxnfc *ring_count)
 {
@@ -3934,7 +3937,8 @@ static int do_grxfhindir(struct cmd_context *ctx,
 		return 1;
 	}
 
-	print_indir_table(ctx, ring_count, indir->size, indir->ring_index);
+	print_indir_table(ctx, ring_count->data, indir->size,
+			  indir->ring_index);
 
 	free(indir);
 	return 0;
@@ -3949,7 +3953,7 @@ static int do_grxfh(struct cmd_context *ctx)
 	u32 rss_context = 0;
 	u32 i, indir_bytes;
 	unsigned int arg_num = 0;
-	char *hkey;
+	u8 *hkey;
 	int err;
 
 	while (arg_num < ctx->argc) {
@@ -3999,21 +4003,13 @@ static int do_grxfh(struct cmd_context *ctx)
 		return 1;
 	}
 
-	print_indir_table(ctx, &ring_count, rss->indir_size, rss->rss_config);
+	print_indir_table(ctx, ring_count.data, rss->indir_size,
+			  rss->rss_config);
 
 	indir_bytes = rss->indir_size * sizeof(rss->rss_config[0]);
-	hkey = ((char *)rss->rss_config + indir_bytes);
+	hkey = ((u8 *)rss->rss_config + indir_bytes);
 
-	printf("RSS hash key:\n");
-	if (!rss->key_size)
-		printf("Operation not supported\n");
-
-	for (i = 0; i < rss->key_size; i++) {
-		if (i == (rss->key_size - 1))
-			printf("%02x\n", (u8) hkey[i]);
-		else
-			printf("%02x:", (u8) hkey[i]);
-	}
+	print_rss_hkey(hkey, rss->key_size);
 
 	printf("RSS hash function:\n");
 	if (!rss->hfunc) {
@@ -5683,7 +5679,8 @@ static const struct option args[] = {
 		.json	= true,
 		.func	= do_gpause,
 		.nlfunc	= nl_gpause,
-		.help	= "Show pause options"
+		.help	= "Show pause options",
+		.xhelp	= "		[ --src aggregate | emac | pmac ]\n"
 	},
 	{
 		.opts	= "-A|--pause",
@@ -5696,6 +5693,7 @@ static const struct option args[] = {
 	},
 	{
 		.opts	= "-c|--show-coalesce",
+		.json	= true,
 		.func	= do_gcoalesce,
 		.nlfunc	= nl_gcoalesce,
 		.help	= "Show coalesce options"
@@ -5729,9 +5727,13 @@ static const struct option args[] = {
 			  "		[sample-interval N]\n"
 			  "		[cqe-mode-rx on|off]\n"
 			  "		[cqe-mode-tx on|off]\n"
+			  "		[tx-aggr-max-bytes N]\n"
+			  "		[tx-aggr-max-frames N]\n"
+			  "		[tx-aggr-time-usecs N]\n"
 	},
 	{
 		.opts	= "-g|--show-ring",
+		.json	= true,
 		.func	= do_gring,
 		.nlfunc	= nl_gring,
 		.help	= "Query RX/TX ring parameters"
@@ -5745,9 +5747,11 @@ static const struct option args[] = {
 			  "		[ rx-mini N ]\n"
 			  "		[ rx-jumbo N ]\n"
 			  "		[ tx N ]\n"
-			  "		[ rx-buf-len N]\n"
-			  "             [ cqe-size N]\n"
-			  "		[ tx-push on|off]\n"
+			  "		[ rx-buf-len N ]\n"
+			  "		[ cqe-size N ]\n"
+			  "		[ tx-push on|off ]\n"
+			  "		[ rx-push on|off ]\n"
+			  "		[ tx-push-buf-len N]\n"
 	},
 	{
 		.opts	= "-k|--show-features|--show-offload",
@@ -5801,13 +5805,13 @@ static const struct option args[] = {
 		.opts	= "-p|--identify",
 		.func	= do_phys_id,
 		.help	= "Show visible port identification (e.g. blinking)",
-		.xhelp	= "               [ TIME-IN-SECONDS ]\n"
+		.xhelp	= "		[ TIME-IN-SECONDS ]\n"
 	},
 	{
 		.opts	= "-t|--test",
 		.func	= do_test,
 		.help	= "Execute adapter self test",
-		.xhelp	= "               [ online | offline | external_lb ]\n"
+		.xhelp	= "		[ online | offline | external_lb ]\n"
 	},
 	{
 		.opts	= "-S|--statistics",
@@ -5816,7 +5820,8 @@ static const struct option args[] = {
 		.nlchk	= nl_gstats_chk,
 		.nlfunc	= nl_gstats,
 		.help	= "Show adapter statistics",
-		.xhelp	= "               [ --all-groups | --groups [eth-phy] [eth-mac] [eth-ctrl] [rmon] ]\n"
+		.xhelp	= "		[ --all-groups | --groups [eth-phy] [eth-mac] [eth-ctrl] [rmon] ]\n"
+			  "		[ --src aggregate | emac | pmac ]\n"
 	},
 	{
 		.opts	= "--phy-statistics",
@@ -5856,7 +5861,7 @@ static const struct option args[] = {
 			  "			[ dst-mac %x:%x:%x:%x:%x:%x [m %x:%x:%x:%x:%x:%x] ]\n"
 			  "			[ action %d ] | [ vf %d queue %d ]\n"
 			  "			[ context %d ]\n"
-			  "			[ loc %d]] |\n"
+			  "			[ loc %d ] |\n"
 			  "		delete %d\n"
 	},
 	{
@@ -5867,7 +5872,9 @@ static const struct option args[] = {
 	},
 	{
 		.opts	= "-x|--show-rxfh-indir|--show-rxfh",
+		.json	= true,
 		.func	= do_grxfh,
+		.nlfunc	= nl_grss,
 		.help	= "Show Rx flow hash indirection table and/or RSS hash key",
 		.xhelp	= "		[ context %d ]\n"
 	},
@@ -5885,7 +5892,7 @@ static const struct option args[] = {
 		.opts	= "-f|--flash",
 		.func	= do_flash,
 		.help	= "Flash firmware image from the specified file to a region on the device",
-		.xhelp	= "               FILENAME [ REGION-NUMBER-TO-FLASH ]\n"
+		.xhelp	= "		FILENAME [ REGION-NUMBER-TO-FLASH ]\n"
 	},
 	{
 		.opts	= "-P|--show-permaddr",
@@ -5916,10 +5923,10 @@ static const struct option args[] = {
 		.func	= do_schannels,
 		.nlfunc	= nl_schannels,
 		.help	= "Set Channels",
-		.xhelp	= "               [ rx N ]\n"
-			  "               [ tx N ]\n"
-			  "               [ other N ]\n"
-			  "               [ combined N ]\n"
+		.xhelp	= "		[ rx N ]\n"
+			  "		[ tx N ]\n"
+			  "		[ other N ]\n"
+			  "		[ combined N ]\n"
 	},
 	{
 		.opts	= "--show-priv-flags",
@@ -5986,16 +5993,16 @@ static const struct option args[] = {
 		.xhelp	= "		[ rx-copybreak ]\n"
 			  "		[ tx-copybreak ]\n"
 			  "		[ tx-buf-size ]\n"
-			  "		[ pfc-precention-tout ]\n"
+			  "		[ pfc-prevention-tout ]\n"
 	},
 	{
 		.opts	= "--set-tunable",
 		.func	= do_stunable,
 		.help	= "Set tunable",
-		.xhelp	= "		[ rx-copybreak N]\n"
-			  "		[ tx-copybreak N]\n"
-			  "		[ tx-buf-size N]\n"
-			  "		[ pfc-precention-tout N]\n"
+		.xhelp	= "		[ rx-copybreak N ]\n"
+			  "		[ tx-copybreak N ]\n"
+			  "		[ tx-buf-size N ]\n"
+			  "		[ pfc-prevention-tout N ]\n"
 	},
 	{
 		.opts	= "--reset",
@@ -6035,14 +6042,14 @@ static const struct option args[] = {
 		.func	= do_sfec,
 		.nlfunc	= nl_sfec,
 		.help	= "Set FEC settings",
-		.xhelp	= "		[ encoding auto|off|rs|baser|llrs [...]]\n"
+		.xhelp	= "		[ encoding auto|off|rs|baser|llrs [...] ]\n"
 	},
 	{
 		.opts	= "-Q|--per-queue",
 		.func	= do_perqueue,
 		.help	= "Apply per-queue command. ",
 		.xhelp	= "The supported sub commands include --show-coalesce, --coalesce"
-			  "             [queue_mask %x] SUB_COMMAND\n",
+			  "		[queue_mask %x] SUB_COMMAND\n",
 	},
 	{
 		.opts	= "--cable-test",
@@ -6076,6 +6083,55 @@ static const struct option args[] = {
 		.nlfunc	= nl_smodule,
 		.help	= "Set transceiver module settings",
 		.xhelp	= "		[ power-mode-policy high|auto ]\n"
+	},
+	{
+		.opts	= "--get-plca-cfg",
+		.nlfunc	= nl_plca_get_cfg,
+		.help	= "Get PLCA configuration",
+	},
+	{
+		.opts	= "--set-plca-cfg",
+		.nlfunc	= nl_plca_set_cfg,
+		.help	= "Set PLCA configuration",
+		.xhelp  = "		[ enable on|off ]\n"
+			  "		[ node-id N ]\n"
+			  "		[ node-cnt N ]\n"
+			  "		[ to-tmr N ]\n"
+			  "		[ burst-cnt N ]\n"
+			  "		[ burst-tmr N ]\n"
+	},
+	{
+		.opts	= "--get-plca-status",
+		.nlfunc	= nl_plca_get_status,
+		.help	= "Get PLCA status information",
+	},
+	{
+		.opts	= "--show-mm",
+		.json	= true,
+		.nlfunc	= nl_get_mm,
+		.help	= "Show MAC merge layer state",
+	},
+	{
+		.opts	= "--set-mm",
+		.nlfunc	= nl_set_mm,
+		.help	= "Set MAC merge layer parameters",
+			  "		[ verify-enabled on|off ]\n"
+			  "		[ verify-time N ]\n"
+			  "		[ tx-enabled on|off ]\n"
+			  "		[ pmac-enabled on|off ]\n"
+			  "		[ tx-min-frag-size 60-252 ]\n"
+	},
+	{
+		.opts	= "--show-pse",
+		.json	= true,
+		.nlfunc	= nl_gpse,
+		.help	= "Show settings for Power Sourcing Equipment",
+	},
+	{
+		.opts	= "--set-pse",
+		.nlfunc	= nl_spse,
+		.help	= "Set Power Sourcing Equipment settings",
+		.xhelp	= "		[ podl-pse-admin-control enable|disable ]\n"
 	},
 	{
 		.opts	= "-h|--help",
@@ -6347,6 +6403,9 @@ int main(int argc, char **argp)
 
 	init_global_link_mode_masks();
 
+	if (argc < 2)
+		exit_bad_args();
+
 	/* Skip command name */
 	argp++;
 	argc--;
@@ -6391,7 +6450,7 @@ int main(int argc, char **argp)
 	 * name to get settings for (which we don't expect to begin
 	 * with '-').
 	 */
-	if (argc == 0)
+	if (!*argp)
 		exit_bad_args();
 
 	k = find_option(*argp);
