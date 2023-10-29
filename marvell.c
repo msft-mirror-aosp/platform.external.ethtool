@@ -31,23 +31,23 @@ static void dump_timer(const char *name, const void *p)
 static void dump_queue(const char *name, const void *a, int rx)
 {
 	struct desc {
-		u_int32_t		ctl;
-		u_int32_t		next;
-		u_int32_t		data_lo;
-		u_int32_t		data_hi;
-		u_int32_t		status;
-		u_int32_t		timestamp;
-		u_int16_t		csum2;
-		u_int16_t		csum1;
-		u_int16_t		csum2_start;
-		u_int16_t		csum1_start;
-		u_int32_t		addr_lo;
-		u_int32_t		addr_hi;
-		u_int32_t		count_lo;
-		u_int32_t		count_hi;
-		u_int32_t               byte_count;
-		u_int32_t               csr;
-		u_int32_t               flag;
+		uint32_t		ctl;
+		uint32_t		next;
+		uint32_t		data_lo;
+		uint32_t		data_hi;
+		uint32_t		status;
+		uint32_t		timestamp;
+		uint16_t		csum2;
+		uint16_t		csum1;
+		uint16_t		csum2_start;
+		uint16_t		csum1_start;
+		uint32_t		addr_lo;
+		uint32_t		addr_hi;
+		uint32_t		count_lo;
+		uint32_t		count_hi;
+		uint32_t		byte_count;
+		uint32_t		csr;
+		uint32_t		flag;
 	};
 	const struct desc *d = a;
 
@@ -130,7 +130,7 @@ static void dump_fifo(const char *name, const void *p)
 static void dump_gmac_fifo(const char *name, const void *p)
 {
 	const u32 *r = p;
-	int i;
+	unsigned int i;
 	static const char *regs[] = {
 		"End Address",
 		"Almost Full Thresh",
@@ -259,7 +259,7 @@ static void dump_control(u8 *r)
 	printf("General Purpose  I/O             0x%08X\n", *(u32 *) (r + 0x15c));
 }
 
-int skge_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+int skge_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		   struct ethtool_regs *regs)
 {
 	const u32 *r = (const u32 *) regs->data;
@@ -380,7 +380,7 @@ static void dump_prefetch(const char *name, const void *r)
 	}
 }
 
-int sky2_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+int sky2_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		   struct ethtool_regs *regs)
 {
 	const u16 *r16 = (const u16 *) regs->data;
