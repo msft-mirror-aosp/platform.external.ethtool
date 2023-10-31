@@ -8,8 +8,14 @@
  */
 
 #include <stdio.h>
+#include <errno.h>
 #include "internal.h"
 #include "sff-common.h"
+#include "netlink/extapi.h"
+
+#define SFF8079_PAGE_SIZE		0x80
+#define SFF8079_I2C_ADDRESS_LOW		0x50
+#define SFF8079_I2C_ADDRESS_HIGH	0x51
 
 static void sff8079_show_identifier(const __u8 *id)
 {
@@ -191,8 +197,76 @@ static void sff8079_show_transceiver(const __u8 *id)
 		printf("%s Extended: 100G AOC or 25GAUI C2M AOC with worst BER of 10^(-12)\n", pfx);
 	if (id[36] == 0x19)
 		printf("%s Extended: 100G ACC or 25GAUI C2M ACC with worst BER of 10^(-12)\n", pfx);
+	if (id[36] == 0x1a)
+		printf("%s Extended: 100GE-DWDM2 (DWDM transceiver using 2 wavelengths on a 1550 nm DWDM grid with a reach up to 80 km)\n",
+		       pfx);
+	if (id[36] == 0x1b)
+		printf("%s Extended: 100G 1550nm WDM (4 wavelengths)\n", pfx);
 	if (id[36] == 0x1c)
 		printf("%s Extended: 10Gbase-T Short Reach\n", pfx);
+	if (id[36] == 0x1d)
+		printf("%s Extended: 5GBASE-T\n", pfx);
+	if (id[36] == 0x1e)
+		printf("%s Extended: 2.5GBASE-T\n", pfx);
+	if (id[36] == 0x1f)
+		printf("%s Extended: 40G SWDM4\n", pfx);
+	if (id[36] == 0x20)
+		printf("%s Extended: 100G SWDM4\n", pfx);
+	if (id[36] == 0x21)
+		printf("%s Extended: 100G PAM4 BiDi\n", pfx);
+	if (id[36] == 0x22)
+		printf("%s Extended: 4WDM-10 MSA (10km version of 100G CWDM4 with same RS(528,514) FEC in host system)\n",
+		       pfx);
+	if (id[36] == 0x23)
+		printf("%s Extended: 4WDM-20 MSA (20km version of 100GBASE-LR4 with RS(528,514) FEC in host system)\n",
+		       pfx);
+	if (id[36] == 0x24)
+		printf("%s Extended: 4WDM-40 MSA (40km reach with APD receiver and RS(528,514) FEC in host system)\n",
+		       pfx);
+	if (id[36] == 0x25)
+		printf("%s Extended: 100GBASE-DR (clause 140), CAUI-4 (no FEC)\n", pfx);
+	if (id[36] == 0x26)
+		printf("%s Extended: 100G-FR or 100GBASE-FR1 (clause 140), CAUI-4 (no FEC)\n", pfx);
+	if (id[36] == 0x27)
+		printf("%s Extended: 100G-LR or 100GBASE-LR1 (clause 140), CAUI-4 (no FEC)\n", pfx);
+	if (id[36] == 0x30)
+		printf("%s Extended: Active Copper Cable with 50GAUI, 100GAUI-2 or 200GAUI-4 C2M. Providing a worst BER of 10-6 or below\n",
+		       pfx);
+	if (id[36] == 0x31)
+		printf("%s Extended: Active Optical Cable with 50GAUI, 100GAUI-2 or 200GAUI-4 C2M. Providing a worst BER of 10-6 or below\n",
+		       pfx);
+	if (id[36] == 0x32)
+		printf("%s Extended: Active Copper Cable with 50GAUI, 100GAUI-2 or 200GAUI-4 C2M. Providing a worst BER of 2.6x10-4 for ACC, 10-5 for AUI, or below\n",
+		       pfx);
+	if (id[36] == 0x33)
+		printf("%s Extended: Active Optical Cable with 50GAUI, 100GAUI-2 or 200GAUI-4 C2M. Providing a worst BER of 2.6x10-4 for ACC, 10-5 for AUI, or below\n",
+		       pfx);
+	if (id[36] == 0x40)
+		printf("%s Extended: 50GBASE-CR, 100GBASE-CR2, or 200GBASE-CR4\n", pfx);
+	if (id[36] == 0x41)
+		printf("%s Extended: 50GBASE-SR, 100GBASE-SR2, or 200GBASE-SR4\n", pfx);
+	if (id[36] == 0x42)
+		printf("%s Extended: 50GBASE-FR or 200GBASE-DR4\n", pfx);
+	if (id[36] == 0x43)
+		printf("%s Extended: 200GBASE-FR4\n", pfx);
+	if (id[36] == 0x44)
+		printf("%s Extended: 200G 1550 nm PSM4\n", pfx);
+	if (id[36] == 0x45)
+		printf("%s Extended: 50GBASE-LR\n", pfx);
+	if (id[36] == 0x46)
+		printf("%s Extended: 200GBASE-LR4\n", pfx);
+	if (id[36] == 0x50)
+		printf("%s Extended: 64GFC EA\n", pfx);
+	if (id[36] == 0x51)
+		printf("%s Extended: 64GFC SW\n", pfx);
+	if (id[36] == 0x52)
+		printf("%s Extended: 64GFC LW\n", pfx);
+	if (id[36] == 0x53)
+		printf("%s Extended: 128GFC EA\n", pfx);
+	if (id[36] == 0x54)
+		printf("%s Extended: 128GFC SW\n", pfx);
+	if (id[36] == 0x55)
+		printf("%s Extended: 128GFC LW\n", pfx);
 }
 
 static void sff8079_show_encoding(const __u8 *id)
@@ -328,7 +402,7 @@ static void sff8079_show_options(const __u8 *id)
 		printf("%s Power level 3 requirement\n", pfx);
 }
 
-void sff8079_show_all(const __u8 *id)
+static void sff8079_show_all_common(const __u8 *id)
 {
 	sff8079_show_identifier(id);
 	if (((id[0] == 0x02) || (id[0] == 0x03)) && (id[1] == 0x04)) {
@@ -370,4 +444,62 @@ void sff8079_show_all(const __u8 *id)
 		sff8079_show_ascii(id, 68, 83, "Vendor SN");
 		sff8079_show_ascii(id, 84, 91, "Date code");
 	}
+}
+
+void sff8079_show_all_ioctl(const __u8 *id)
+{
+	sff8079_show_all_common(id);
+}
+
+static int sff8079_get_eeprom_page(struct cmd_context *ctx, u8 i2c_address,
+				   __u8 *buf)
+{
+	struct ethtool_module_eeprom request = {
+		.length = SFF8079_PAGE_SIZE,
+		.i2c_address = i2c_address,
+	};
+	int ret;
+
+	ret = nl_get_eeprom_page(ctx, &request);
+	if (!ret)
+		memcpy(buf, request.data, SFF8079_PAGE_SIZE);
+
+	return ret;
+}
+
+int sff8079_show_all_nl(struct cmd_context *ctx)
+{
+	u8 *buf;
+	int ret;
+
+	/* The SFF-8472 parser expects a single buffer that contains the
+	 * concatenation of the first 256 bytes from addresses A0h and A2h,
+	 * respectively.
+	 */
+	buf = calloc(1, ETH_MODULE_SFF_8472_LEN);
+	if (!buf)
+		return -ENOMEM;
+
+	/* Read A0h page */
+	ret = sff8079_get_eeprom_page(ctx, SFF8079_I2C_ADDRESS_LOW, buf);
+	if (ret)
+		goto out;
+
+	sff8079_show_all_common(buf);
+
+	/* Finish if A2h page is not present */
+	if (!(buf[92] & (1 << 6)))
+		goto out;
+
+	/* Read A2h page */
+	ret = sff8079_get_eeprom_page(ctx, SFF8079_I2C_ADDRESS_HIGH,
+				      buf + ETH_MODULE_SFF_8079_LEN);
+	if (ret)
+		goto out;
+
+	sff8472_show_all(buf);
+out:
+	free(buf);
+
+	return ret;
 }
