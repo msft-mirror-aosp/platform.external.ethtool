@@ -194,11 +194,11 @@ static void fec_dump_reg_v2(int reg, u32 val)
 #undef FIELD
 #undef REG
 
-int fec_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+int fec_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		  struct ethtool_regs *regs)
 {
 	const u32 *data = (u32 *)regs->data;
-	int offset;
+	unsigned int offset;
 	u32 val;
 
 	for (offset = 0; offset < regs->len; offset += 4) {
