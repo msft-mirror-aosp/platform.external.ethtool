@@ -291,7 +291,8 @@ int nlsock_prep_get_request(struct nl_socket *nlsk, unsigned int nlcmd,
 	ret = msg_init(nlctx, &nlsk->msgbuff, nlcmd, nlm_flags);
 	if (ret < 0)
 		return ret;
-	if (ethnla_fill_header(&nlsk->msgbuff, hdr_attrtype, devname, flags))
+	if (ethnla_fill_header_phy(&nlsk->msgbuff, hdr_attrtype, devname,
+				   nlctx->ctx->phy_index, flags))
 		return -EMSGSIZE;
 
 	return 0;

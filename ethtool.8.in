@@ -143,6 +143,10 @@ ethtool \- query or control network driver and hardware settings
 .B ethtool [-I | --include-statistics]
 .I args
 .HP
+.B ethtool
+.BN --phy
+.I args
+.HP
 .B ethtool \-\-monitor
 [
 .I command
@@ -587,6 +591,23 @@ plain text in the presence of this option.
 .B \-I \-\-include\-statistics
 Include command-related statistics in the output. This option allows
 displaying relevant device statistics for selected get commands.
+.TP
+.BI \-\-phy \ N
+Target a PHY within the interface. The PHY index can be retrieved with
+.B \-\-show\-phys. PHY index 0 targets the phy device directly attached to
+the ethernet MAC, if any.
+The following commands can accept a PHY index:
+.TS
+nokeep;
+lB	l.
+\-\-cable\-test
+\-\-cable\-test\-tdr
+\-\-get\-plca\-cfg
+\-\-set\-plca\-cfg
+\-\-get\-plca\-status
+\-\-show-pse
+\-\-set-pse
+.TE
 .TP
 .B \-a \-\-show\-pause
 Queries the specified Ethernet device for pause parameter information.
