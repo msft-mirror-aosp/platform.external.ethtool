@@ -6255,6 +6255,11 @@ static const struct option args[] = {
 			  "		[ pass PASS ]\n"
 	},
 	{
+		.opts	= "--show-phys",
+		.nlfunc	= nl_get_phy,
+		.help	= "List PHYs"
+	},
+	{
 		.opts	= "-h|--help",
 		.no_dev	= true,
 		.func	= show_usage,
