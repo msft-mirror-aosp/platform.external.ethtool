@@ -6551,6 +6551,12 @@ int main(int argc, char **argp)
 			argc -= 2;
 			continue;
 		}
+		if (*argp && !strcmp(*argp, "--disable-netlink")) {
+			ctx.nl_disable = true;
+			argp += 1;
+			argc -= 1;
+			continue;
+		}
 		if (*argp && !strcmp(*argp, "--json")) {
 			ctx.json = true;
 			argp += 1;
