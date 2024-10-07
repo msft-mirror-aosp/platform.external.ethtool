@@ -545,6 +545,7 @@ ethtool \- query or control network driver and hardware settings
 .BR enable | disable ]
 .RB [ c33\-pse\-admin\-control
 .BR enable | disable ]
+.BN c33\-pse\-avail\-pw\-limit N
 .HP
 .B ethtool \-\-flash\-module\-firmware
 .I devname
@@ -1815,6 +1816,36 @@ status depend on internal PSE state machine and automatic PD classification
 support. It corresponds to IEEE 802.3-2022 30.9.1.1.5
 (aPSEPowerDetectionStatus) with potential values being
 .B disabled, searching, delivering power, test, fault, other fault
+.TP
+.B c33-pse-extended-state
+This attribute indicates the Extended state of the c33 PSE. The extended
+state correlated with the c33 PSE Extended Substate allows to have more
+detail on the c33 PSE current error state.
+It corresponds to IEEE 802.3-2022 33.2.4.4 Variables.
+.TP
+.B c33-pse-extended-substate
+This attribute indicates the Extended substate of the c33 PSE. Correlated
+with the c33 PSE Extended state value, it allows to have more detail on the
+c33 PSE current error state.
+.TP
+.B c33-pse-power-class
+This attribute identifies the power class of the c33 PSE. It depends on
+the class negotiated between the PSE and the PD. It corresponds to
+IEEE 802.3-2022 30.9.1.1.8 (aPSEPowerClassification).
+.TP
+.B c33-pse-actual-power
+This attribute identifies the actual power drawn by the c33 PSE. It
+corresponds to ``IEEE 802.3-2022`` 30.9.1.1.23 (aPSEActualPower). Actual
+power is reported in mW.
+.TP
+.B c33-pse-available-power-limit
+This attribute identifies the configured c33 PSE power limit in mW.
+.TP
+.B c33-pse-power-limit-ranges
+This attribute specifies the allowed power limit ranges in mW for
+configuring the c33-pse-avail-pw-limit parameter. It defines the valid
+power levels that can be assigned to the c33 PSE in compliance with the
+c33 standard.
 
 .RE
 .TP
@@ -1829,6 +1860,11 @@ This parameter manages PoDL PSE Admin operations in accordance with the IEEE
 .A2 c33-pse-admin-control \ enable disable
 This parameter manages c33 PSE Admin operations in accordance with the IEEE
 802.3-2022 30.9.1.2.1 (acPSEAdminControl) specification.
+.TP
+.B c33-pse-avail-pw-limit \ N
+This parameter manages c33 PSE Available Power Limit in mW, in accordance
+with the IEEE 802.3-2022 33.2.4.4 Variables (pse_available_power)
+specification.
 
 .RE
 .TP
