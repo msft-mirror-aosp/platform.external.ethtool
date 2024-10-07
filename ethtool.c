@@ -6246,6 +6246,7 @@ static const struct option args[] = {
 		.help	= "Set Power Sourcing Equipment settings",
 		.xhelp	= "		[ podl-pse-admin-control enable|disable ]\n"
 			  "		[ c33-pse-admin-control enable|disable ]\n"
+			  "		[ c33-pse-avail-pw-limit N ]\n"
 	},
 	{
 		.opts	= "--flash-module-firmware",
