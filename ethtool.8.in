@@ -1200,6 +1200,10 @@ Specifies the RSS context to spread packets over multiple queues; either
 for the default RSS context, or a value returned by
 .BI ethtool\ -X\  ... \ context
 .BR new .
+If combined with
+.BR action \ or\  queue ,
+the Rx queue specified will be added to the value read from the RSS indirection
+table to produce the actual Rx queue to deliver to.
 .TP
 .BI vf \ N
 Specifies the Virtual Function the filter applies to. Not compatible with action.
