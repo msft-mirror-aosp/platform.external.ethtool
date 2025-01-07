@@ -3883,8 +3883,10 @@ static int do_srxclass(struct cmd_context *ctx)
 			nfccmd.flow_type |= FLOW_RSS;
 
 		err = send_ioctl(ctx, &nfccmd);
-		if (err < 0)
+		if (err < 0) {
 			perror("Cannot change RX network flow hashing options");
+			return 1;
+		}
 	} else if (!strcmp(ctx->argp[0], "flow-type")) {
 		struct ethtool_rx_flow_spec rx_rule_fs;
 		__u32 rss_context = 0;
