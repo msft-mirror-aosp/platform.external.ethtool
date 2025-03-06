@@ -977,15 +977,20 @@ void sff8636_show_all_ioctl(const __u8 *id, __u32 eeprom_len)
 {
 	struct sff8636_memory_map map = {};
 
-	if (id[SFF8636_ID_OFFSET] == SFF8024_ID_QSFP_DD ||
-	    id[SFF8636_ID_OFFSET] == SFF8024_ID_OSFP ||
-	    id[SFF8636_ID_OFFSET] == SFF8024_ID_DSFP) {
+	switch (id[SFF8636_ID_OFFSET]) {
+	case SFF8024_ID_QSFP_DD:
+	case SFF8024_ID_OSFP:
+	case SFF8024_ID_DSFP:
+	case SFF8024_ID_QSFP_PLUS_CMIS:
+	case SFF8024_ID_SFP_DD_CMIS:
+	case SFF8024_ID_SFP_PLUS_CMIS:
 		cmis_show_all_ioctl(id);
-		return;
+		break;
+	default:
+		sff8636_memory_map_init_buf(&map, id, eeprom_len);
+		sff8636_show_all_common(&map);
+		break;
 	}
-
-	sff8636_memory_map_init_buf(&map, id, eeprom_len);
-	sff8636_show_all_common(&map);
 }
 
 static void sff8636_request_init(struct ethtool_module_eeprom *request, u8 page,
@@ -1033,8 +1038,15 @@ sff8636_memory_map_init_pages(struct cmd_context *ctx,
 
 	sff8636_request_init(&request, 0x3, SFF8636_PAGE_SIZE);
 	ret = nl_get_eeprom_page(ctx, &request);
-	if (ret < 0)
-		return ret;
+	if (ret < 0) {
+		/* Page 03h is not available due to a bug in the driver.
+		 * This is a non-fatal error and sff8636_dom_parse()
+		 * handles this correctly.
+		 */
+		fprintf(stderr, "Failed to read Upper Page 03h, driver error?\n");
+		return 0;
+	}
+
 	map->page_03h = request.data - SFF8636_PAGE_SIZE;
 
 	return 0;
