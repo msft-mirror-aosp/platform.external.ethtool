@@ -18,10 +18,28 @@ on top of this library.
 is reduced, i.e. the library provides many helpers, but the programmer is not
 forced to use them.
 
+= Documentation =
+
+If doxygen is installed on your system, you can enable it via:
+
+       ./configure --with-doxygen=yes
+
+then type `make`.
+
+To access the doxygen documentation, open the doxygen/html/index.html file with
+a web browser.
+
 = Example files =
 
 You can find several example files under examples/ that you can compile by
 invoking `make check'.
+
+= Contributing =
+
+Please submit any patches to <netfilter-devel@vger.kernel.org>.
+
+The contributions should broadly follow the Linux Kernel process, as detailed
+in https://www.kernel.org/doc/html/latest/process/submitting-patches.html
 
 --
 08/sep/2010

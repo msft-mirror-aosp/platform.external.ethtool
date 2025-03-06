@@ -59,7 +59,7 @@ cc_binary {
         "-DETHTOOL_ENABLE_NETLINK",
         // causes a fair bit of binary bloat: "-DETHTOOL_ENABLE_PRETTY_DUMP",
         "-DPACKAGE=\"ethtool\"",
-        "-DVERSION=\"6.5\"",
+        "-DVERSION=\"6.11\"",
     ],
     apex_available: [
         "com.android.tethering",
