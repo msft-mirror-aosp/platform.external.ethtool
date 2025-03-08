@@ -70,6 +70,18 @@ static void exit_bad_args(void)
 	exit(1);
 }
 
+static void exit_bad_args_info(const char *info) __attribute__((noreturn));
+
+static void exit_bad_args_info(const char *info)
+{
+	fprintf(stderr,
+		"ethtool: bad command line argument(s)\n"
+		"%s\n"
+		"For more information run ethtool -h\n",
+		info);
+	exit(1);
+}
+
 static void exit_nlonly_param(const char *name) __attribute__((noreturn));
 
 static void exit_nlonly_param(const char *name)
@@ -360,6 +372,18 @@ static int rxflow_str_to_type(const char *str)
 		flow_type = AH_ESP_V4_FLOW;
 	else if (!strcmp(str, "sctp4"))
 		flow_type = SCTP_V4_FLOW;
+	else if (!strcmp(str, "gtpc4"))
+		flow_type = GTPC_V4_FLOW;
+	else if (!strcmp(str, "gtpc4t"))
+		flow_type = GTPC_TEID_V4_FLOW;
+	else if (!strcmp(str, "gtpu4"))
+		flow_type = GTPU_V4_FLOW;
+	else if (!strcmp(str, "gtpu4e"))
+		flow_type = GTPU_EH_V4_FLOW;
+	else if (!strcmp(str, "gtpu4u"))
+		flow_type = GTPU_UL_V4_FLOW;
+	else if (!strcmp(str, "gtpu4d"))
+		flow_type = GTPU_DL_V4_FLOW;
 	else if (!strcmp(str, "tcp6"))
 		flow_type = TCP_V6_FLOW;
 	else if (!strcmp(str, "udp6"))
@@ -370,6 +394,18 @@ static int rxflow_str_to_type(const char *str)
 		flow_type = SCTP_V6_FLOW;
 	else if (!strcmp(str, "ether"))
 		flow_type = ETHER_FLOW;
+	else if (!strcmp(str, "gtpc6"))
+		flow_type = GTPC_V6_FLOW;
+	else if (!strcmp(str, "gtpc6t"))
+		flow_type = GTPC_TEID_V6_FLOW;
+	else if (!strcmp(str, "gtpu6"))
+		flow_type = GTPU_V6_FLOW;
+	else if (!strcmp(str, "gtpu6e"))
+		flow_type = GTPU_EH_V6_FLOW;
+	else if (!strcmp(str, "gtpu6u"))
+		flow_type = GTPU_UL_V6_FLOW;
+	else if (!strcmp(str, "gtpu6d"))
+		flow_type = GTPU_DL_V6_FLOW;
 
 	return flow_type;
 }
@@ -483,6 +519,7 @@ static void init_global_link_mode_masks(void)
 		ETHTOOL_LINK_MODE_10baseT1S_Full_BIT,
 		ETHTOOL_LINK_MODE_10baseT1S_Half_BIT,
 		ETHTOOL_LINK_MODE_10baseT1S_P2MP_Half_BIT,
+		ETHTOOL_LINK_MODE_10baseT1BRR_Full_BIT,
 	};
 	static const enum ethtool_link_mode_bit_indices
 		additional_advertised_flags_bits[] = {
@@ -743,6 +780,8 @@ static void dump_link_caps(const char *prefix, const char *an_prefix,
 		  "10baseT1S/Half" },
 		{ 0, ETHTOOL_LINK_MODE_10baseT1S_P2MP_Half_BIT,
 		  "10baseT1S/Half" },
+		{ 0, ETHTOOL_LINK_MODE_10baseT1BRR_Full_BIT,
+		  "10baseT1BRR/Full" },
 	};
 	int indent;
 	int did1, new_line_pend;
@@ -1010,6 +1049,9 @@ static int parse_rxfhashopts(char *optstr, u32 *data)
 		case 'n':
 			*data |= RXH_L4_B_2_3;
 			break;
+		case 'e':
+			*data |= RXH_GTP_TEID;
+			break;
 		case 'r':
 			*data |= RXH_DISCARD;
 			break;
@@ -1042,6 +1084,8 @@ static char *unparse_rxfhashopts(u64 opts)
 			strcat(buf, "L4 bytes 0 & 1 [TCP/UDP src port]\n");
 		if (opts & RXH_L4_B_2_3)
 			strcat(buf, "L4 bytes 2 & 3 [TCP/UDP dst port]\n");
+		if (opts & RXH_GTP_TEID)
+			strcat(buf, "GTP TEID\n");
 	} else {
 		sprintf(buf, "None");
 	}
@@ -1559,6 +1603,24 @@ static int dump_rxfhash(int fhash, u64 val)
 	case SCTP_V4_FLOW:
 		fprintf(stdout, "SCTP over IPV4 flows");
 		break;
+	case GTPC_V4_FLOW:
+		fprintf(stdout, "GTP-C over IPV4 flows");
+		break;
+	case GTPC_TEID_V4_FLOW:
+		fprintf(stdout, "GTP-C (include TEID) over IPV4 flows");
+		break;
+	case GTPU_V4_FLOW:
+		fprintf(stdout, "GTP-U over IPV4 flows");
+		break;
+	case GTPU_EH_V4_FLOW:
+		fprintf(stdout, "GTP-U and Extension Header over IPV4 flows");
+		break;
+	case GTPU_UL_V4_FLOW:
+		fprintf(stdout, "GTP-U PSC Uplink over IPV4 flows");
+		break;
+	case GTPU_DL_V4_FLOW:
+		fprintf(stdout, "GTP-U PSC Downlink over IPV4 flows");
+		break;
 	case AH_ESP_V4_FLOW:
 	case AH_V4_FLOW:
 	case ESP_V4_FLOW:
@@ -1572,6 +1634,24 @@ static int dump_rxfhash(int fhash, u64 val)
 		break;
 	case SCTP_V6_FLOW:
 		fprintf(stdout, "SCTP over IPV6 flows");
+		break;
+	case GTPC_V6_FLOW:
+		fprintf(stdout, "GTP-C over IPV6 flows");
+		break;
+	case GTPC_TEID_V6_FLOW:
+		fprintf(stdout, "GTP-C (include TEID) over IPV6 flows");
+		break;
+	case GTPU_V6_FLOW:
+		fprintf(stdout, "GTP-U over IPV6 flows");
+		break;
+	case GTPU_EH_V6_FLOW:
+		fprintf(stdout, "GTP-U and Extension Header over IPV6 flows");
+		break;
+	case GTPU_UL_V6_FLOW:
+		fprintf(stdout, "GTP-U PSC Uplink over IPV6 flows");
+		break;
+	case GTPU_DL_V6_FLOW:
+		fprintf(stdout, "GTP-U PSC Downlink over IPV6 flows");
 		break;
 	case AH_ESP_V6_FLOW:
 	case AH_V6_FLOW:
@@ -3803,8 +3883,10 @@ static int do_srxclass(struct cmd_context *ctx)
 			nfccmd.flow_type |= FLOW_RSS;
 
 		err = send_ioctl(ctx, &nfccmd);
-		if (err < 0)
+		if (err < 0) {
 			perror("Cannot change RX network flow hashing options");
+			return 1;
+		}
 	} else if (!strcmp(ctx->argp[0], "flow-type")) {
 		struct ethtool_rx_flow_spec rx_rule_fs;
 		__u32 rss_context = 0;
@@ -4029,6 +4111,10 @@ static int do_grxfh(struct cmd_context *ctx)
 		       (const char *)hfuncs->data + i * ETH_GSTRING_LEN,
 		       (rss->hfunc & (1 << i)) ? "on" : "off");
 
+	printf("RSS input transformation:\n");
+	printf("    symmetric-xor: %s\n",
+	       (rss->input_xfrm & RXH_XFRM_SYM_XOR) ? "on" : "off");
+
 out:
 	free(hfuncs);
 	free(rss);
@@ -4146,6 +4232,7 @@ static int do_srxfh(struct cmd_context *ctx)
 	u32 arg_num = 0, indir_bytes = 0;
 	u32 req_hfunc = 0;
 	u32 entry_size = sizeof(rss_head.rss_config[0]);
+	u32 req_input_xfrm = 0xff;
 	u32 num_weights = 0;
 	u32 rss_context = 0;
 	int delete = 0;
@@ -4189,8 +4276,21 @@ static int do_srxfh(struct cmd_context *ctx)
 			if (!req_hfunc_name)
 				exit_bad_args();
 			++arg_num;
+		} else if (!strcmp(ctx->argp[arg_num], "xfrm")) {
+			++arg_num;
+			if (!ctx->argp[arg_num])
+				exit_bad_args();
+			if (!strcmp(ctx->argp[arg_num], "symmetric-xor"))
+				req_input_xfrm = RXH_XFRM_SYM_XOR;
+			else if (!strcmp(ctx->argp[arg_num], "none"))
+				req_input_xfrm = 0;
+			else
+				exit_bad_args();
+			++arg_num;
 		} else if (!strcmp(ctx->argp[arg_num], "context")) {
 			++arg_num;
+			if (!ctx->argp[arg_num])
+				exit_bad_args();
 			if(!strcmp(ctx->argp[arg_num], "new"))
 				rss_context = ETH_RXFH_CONTEXT_ALLOC;
 			else
@@ -4333,6 +4433,7 @@ static int do_srxfh(struct cmd_context *ctx)
 	rss->cmd = ETHTOOL_SRSSH;
 	rss->rss_context = rss_context;
 	rss->hfunc = req_hfunc;
+	rss->input_xfrm = req_input_xfrm;
 	if (delete) {
 		rss->indir_size = rss->key_size = 0;
 	} else {
@@ -5640,6 +5741,7 @@ struct option {
 	const char	*opts;
 	bool		no_dev;
 	bool		json;
+	bool		targets_phy;
 	int		(*func)(struct cmd_context *);
 	nl_chk_t	nlchk;
 	nl_func_t	nlfunc;
@@ -5651,6 +5753,7 @@ static const struct option args[] = {
 	{
 		/* "default" entry when no switch is used */
 		.opts	= "",
+		.json	= true,
 		.func	= do_gset,
 		.nlfunc	= nl_gset,
 		.help	= "Display standard information about device",
@@ -5748,6 +5851,7 @@ static const struct option args[] = {
 			  "		[ rx-jumbo N ]\n"
 			  "		[ tx N ]\n"
 			  "		[ rx-buf-len N ]\n"
+			  "		[ tcp-data-split auto|on|off ]\n"
 			  "		[ cqe-size N ]\n"
 			  "		[ tx-push on|off ]\n"
 			  "		[ rx-push on|off ]\n"
@@ -5833,7 +5937,8 @@ static const struct option args[] = {
 		.func	= do_grxclass,
 		.help	= "Show Rx network flow classification options or rules",
 		.xhelp	= "		[ rx-flow-hash tcp4|udp4|ah4|esp4|sctp4|"
-			  "tcp6|udp6|ah6|esp6|sctp6 [context %d] |\n"
+			  "gtpc4|gtpc4t|gtpu4|gtpu4e|gtpu4u|gtpu4d|tcp6|udp6|ah6|esp6|sctp6|"
+			  "gtpc6|gtpc6t|gtpu6|gtpu6e|gtpu6u|gtpu6d [context %d] |\n"
 			  "		  rule %d ]\n"
 	},
 	{
@@ -5841,7 +5946,8 @@ static const struct option args[] = {
 		.func	= do_srxclass,
 		.help	= "Configure Rx network flow classification options or rules",
 		.xhelp	= "		rx-flow-hash tcp4|udp4|ah4|esp4|sctp4|"
-			  "tcp6|udp6|ah6|esp6|sctp6 m|v|t|s|d|f|n|r... [context %d] |\n"
+			  "gtpc4|gtpc4t|gtpu4|gtpu4e|gtpu4u|gtpu4d|tcp6|udp6|ah6|esp6|sctp6"
+			  "|gtpc6|gtpc6t|gtpu6|gtpu6e|gtpu6u|gtpu6d m|v|t|s|d|f|n|r|e... [context %d] |\n"
 			  "		flow-type ether|ip4|tcp4|udp4|sctp4|ah4|esp4|"
 			  "ip6|tcp6|udp6|ah6|esp6|sctp6\n"
 			  "			[ src %x:%x:%x:%x:%x:%x [m %x:%x:%x:%x:%x:%x] ]\n"
@@ -5886,6 +5992,7 @@ static const struct option args[] = {
 			  "		[ equal N | weight W0 W1 ... | default ]\n"
 			  "		[ hkey %x:%x:%x:%x:%x:.... ]\n"
 			  "		[ hfunc FUNC ]\n"
+			  "		[ xfrm symmetric-xor|none ]\n"
 			  "		[ delete ]\n"
 	},
 	{
@@ -5956,6 +6063,7 @@ static const struct option args[] = {
 	},
 	{
 		.opts	= "--show-eee",
+		.json	= true,
 		.func	= do_geee,
 		.nlfunc	= nl_geee,
 		.help	= "Show EEE settings",
@@ -6053,12 +6161,14 @@ static const struct option args[] = {
 	},
 	{
 		.opts	= "--cable-test",
+		.targets_phy	= true,
 		.json	= true,
 		.nlfunc	= nl_cable_test,
 		.help	= "Perform a cable test",
 	},
 	{
 		.opts	= "--cable-test-tdr",
+		.targets_phy	= true,
 		.json	= true,
 		.nlfunc	= nl_cable_test_tdr,
 		.help	= "Print cable test time domain reflectrometery data",
@@ -6086,11 +6196,13 @@ static const struct option args[] = {
 	},
 	{
 		.opts	= "--get-plca-cfg",
+		.targets_phy	= true,
 		.nlfunc	= nl_plca_get_cfg,
 		.help	= "Get PLCA configuration",
 	},
 	{
 		.opts	= "--set-plca-cfg",
+		.targets_phy	= true,
 		.nlfunc	= nl_plca_set_cfg,
 		.help	= "Set PLCA configuration",
 		.xhelp  = "		[ enable on|off ]\n"
@@ -6102,6 +6214,7 @@ static const struct option args[] = {
 	},
 	{
 		.opts	= "--get-plca-status",
+		.targets_phy	= true,
 		.nlfunc	= nl_plca_get_status,
 		.help	= "Get PLCA status information",
 	},
@@ -6123,15 +6236,31 @@ static const struct option args[] = {
 	},
 	{
 		.opts	= "--show-pse",
+		.targets_phy	= true,
 		.json	= true,
 		.nlfunc	= nl_gpse,
 		.help	= "Show settings for Power Sourcing Equipment",
 	},
 	{
 		.opts	= "--set-pse",
+		.targets_phy	= true,
 		.nlfunc	= nl_spse,
 		.help	= "Set Power Sourcing Equipment settings",
 		.xhelp	= "		[ podl-pse-admin-control enable|disable ]\n"
+			  "		[ c33-pse-admin-control enable|disable ]\n"
+			  "		[ c33-pse-avail-pw-limit N ]\n"
+	},
+	{
+		.opts	= "--flash-module-firmware",
+		.nlfunc	= nl_flash_module_fw,
+		.help	= "Flash transceiver module firmware",
+		.xhelp	= "		file FILE\n"
+			  "		[ pass PASS ]\n"
+	},
+	{
+		.opts	= "--show-phys",
+		.nlfunc	= nl_get_phy,
+		.help	= "List PHYs"
 	},
 	{
 		.opts	= "-h|--help",
@@ -6157,7 +6286,8 @@ static int show_usage(struct cmd_context *ctx __maybe_unused)
 	fprintf(stdout,	"Usage:\n");
 	for (i = 0; args[i].opts; i++) {
 		fputs("        ethtool [ FLAGS ] ", stdout);
-		fprintf(stdout, "%s %s\t%s\n",
+		fprintf(stdout, "%s%s %s\t%s\n",
+			args[i].targets_phy ? "[ --phy PHY ] " : "",
 			args[i].opts,
 			args[i].no_dev ? "\t" : "DEVNAME",
 			args[i].help);
@@ -6367,7 +6497,7 @@ static int do_perqueue(struct cmd_context *ctx)
 	return 0;
 }
 
-static int ioctl_init(struct cmd_context *ctx, bool no_dev)
+int ioctl_init(struct cmd_context *ctx, bool no_dev)
 {
 	if (no_dev) {
 		ctx->fd = -1;
@@ -6424,6 +6554,12 @@ int main(int argc, char **argp)
 			argc -= 2;
 			continue;
 		}
+		if (*argp && !strcmp(*argp, "--disable-netlink")) {
+			ctx.nl_disable = true;
+			argp += 1;
+			argc -= 1;
+			continue;
+		}
 		if (*argp && !strcmp(*argp, "--json")) {
 			ctx.json = true;
 			argp += 1;
@@ -6435,6 +6571,19 @@ int main(int argc, char **argp)
 			ctx.show_stats = true;
 			argp += 1;
 			argc -= 1;
+			continue;
+		}
+		if (*argp && !strcmp(*argp, "--phy")) {
+			char *eptr;
+
+			if (argc < 2)
+				exit_bad_args_info("--phy parameters expects a phy index");
+
+			ctx.phy_index = strtoul(argp[1], &eptr, 0);
+			if (!argp[1][0] || *eptr)
+				exit_bad_args_info("invalid phy index");
+			argp += 2;
+			argc -= 2;
 			continue;
 		}
 		break;
@@ -6471,13 +6620,17 @@ int main(int argc, char **argp)
 			exit_bad_args();
 	}
 	if (ctx.json && !args[k].json)
-		exit_bad_args();
+		exit_bad_args_info("JSON output not available for this subcommand");
+
+	if (!args[k].targets_phy && ctx.phy_index)
+		exit_bad_args_info("Unexpected --phy parameter");
+
 	ctx.argc = argc;
 	ctx.argp = argp;
 	netlink_run_handler(&ctx, args[k].nlchk, args[k].nlfunc, !args[k].func);
 
 	if (ctx.json) /* no IOCTL command supports JSON output */
-		exit_bad_args();
+		exit_nlonly_param("--json");
 
 	ret = ioctl_init(&ctx, args[k].no_dev);
 	if (ret)
