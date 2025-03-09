@@ -152,9 +152,14 @@ EXPORT_SYMBOL void *mnl_nlmsg_get_payload_offset(const struct nlmsghdr *nlh,
  */
 EXPORT_SYMBOL bool mnl_nlmsg_ok(const struct nlmsghdr *nlh, int len)
 {
-	return len >= (int)sizeof(struct nlmsghdr) &&
+	size_t ulen = len;
+
+	if (len < 0)
+		return false;
+
+	return ulen           >= sizeof(struct nlmsghdr) &&
 	       nlh->nlmsg_len >= sizeof(struct nlmsghdr) &&
-	       (int)nlh->nlmsg_len <= len;
+	       nlh->nlmsg_len <= ulen;
 }
 
 /**

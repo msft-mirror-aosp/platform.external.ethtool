@@ -206,7 +206,7 @@ EXPORT_SYMBOL int mnl_socket_bind(struct mnl_socket *nl, unsigned int groups,
 
 	addr_len = sizeof(nl->addr);
 	ret = getsockname(nl->fd, (struct sockaddr *) &nl->addr, &addr_len);
-	if (ret < 0)	
+	if (ret < 0)
 		return ret;
 
 	if (addr_len != sizeof(nl->addr)) {
@@ -226,7 +226,7 @@ EXPORT_SYMBOL int mnl_socket_bind(struct mnl_socket *nl, unsigned int groups,
  * \param buf buffer containing the netlink message to be sent
  * \param len number of bytes in the buffer that you want to send
  *
- * On error, it returns -1 and errno is appropriately set. Otherwise, it 
+ * On error, it returns -1 and errno is appropriately set. Otherwise, it
  * returns the number of bytes sent.
  */
 EXPORT_SYMBOL ssize_t mnl_socket_sendto(const struct mnl_socket *nl,
@@ -235,7 +235,7 @@ EXPORT_SYMBOL ssize_t mnl_socket_sendto(const struct mnl_socket *nl,
 	static const struct sockaddr_nl snl = {
 		.nl_family = AF_NETLINK
 	};
-	return sendto(nl->fd, buf, len, 0, 
+	return sendto(nl->fd, buf, len, 0,
 		      (struct sockaddr *) &snl, sizeof(snl));
 }
 
