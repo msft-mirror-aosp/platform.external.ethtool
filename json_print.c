@@ -144,7 +144,7 @@ void print_string(enum output_type type,
 		if (value)
 			fprintf(stdout, fmt, value);
 		else
-			fprintf(stdout, fmt);
+			fprintf(stdout, "%s", fmt);
 	}
 }
 
