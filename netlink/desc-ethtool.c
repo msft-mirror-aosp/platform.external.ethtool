@@ -301,6 +301,8 @@ static const struct pretty_nla_desc __tsinfo_desc[] = {
 	NLATTR_DESC_U32(ETHTOOL_A_TSINFO_PHC_INDEX),
 	NLATTR_DESC_NESTED(ETHTOOL_A_TSINFO_STATS, ts_stat),
 	NLATTR_DESC_NESTED(ETHTOOL_A_TSINFO_HWTSTAMP_PROVIDER, ts_hwtstamp_provider),
+	NLATTR_DESC_U32(ETHTOOL_A_TSINFO_HWTSTAMP_SOURCE),
+	NLATTR_DESC_U32(ETHTOOL_A_TSINFO_HWTSTAMP_PHYINDEX),
 };
 
 static const struct pretty_nla_desc __cable_test_result_desc[] = {
