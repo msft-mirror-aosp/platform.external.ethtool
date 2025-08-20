@@ -420,6 +420,29 @@ int pse_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 		}
 	}
 
+	if (tb[ETHTOOL_A_PSE_PW_D_ID]) {
+		u32 val;
+
+		val = mnl_attr_get_u32(tb[ETHTOOL_A_PSE_PW_D_ID]);
+		print_uint(PRINT_ANY, "power-domain-index",
+			   "Power domain index: %u\n", val);
+	}
+
+	if (tb[ETHTOOL_A_PSE_PRIO_MAX]) {
+		u32 val;
+
+		val = mnl_attr_get_u32(tb[ETHTOOL_A_PSE_PRIO_MAX]);
+		print_uint(PRINT_ANY, "priority-max",
+			   "Max allowed priority: %u\n", val);
+	}
+
+	if (tb[ETHTOOL_A_PSE_PRIO]) {
+		u32 val;
+
+		val = mnl_attr_get_u32(tb[ETHTOOL_A_PSE_PRIO]);
+		print_uint(PRINT_ANY, "priority", "Priority: %u\n", val);
+	}
+
 	close_json_object();
 
 	return MNL_CB_OK;
@@ -484,6 +507,12 @@ static const struct param_parser spse_params[] = {
 	{
 		.arg		= "c33-pse-avail-pw-limit",
 		.type		= ETHTOOL_A_C33_PSE_AVAIL_PW_LIMIT,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "prio",
+		.type		= ETHTOOL_A_PSE_PRIO,
 		.handler	= nl_parse_direct_u32,
 		.min_argc	= 1,
 	},

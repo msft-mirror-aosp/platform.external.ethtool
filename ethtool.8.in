@@ -561,6 +561,7 @@ ethtool \- query or control network driver and hardware settings
 .RB [ c33\-pse\-admin\-control
 .BR enable | disable ]
 .BN c33\-pse\-avail\-pw\-limit N
+.BN prio N
 .HP
 .B ethtool \-\-flash\-module\-firmware
 .I devname
@@ -1911,6 +1912,26 @@ This attribute specifies the allowed power limit ranges in mW for
 configuring the c33-pse-avail-pw-limit parameter. It defines the valid
 power levels that can be assigned to the c33 PSE in compliance with the
 c33 standard.
+.TP
+.B power-domain-index
+Reports the index of the PSE power domain the port belongs to. Every
+port belongs to exactly one power domain. Port priorities are defined
+within that power domain.
+
+Each power domain may have its own maximum budget (e.g., 100 W per
+domain) in addition to a system-wide budget (e.g., 200 W overall).
+Domain limits are enforced first: if a single domain reaches its budget,
+only ports in that domain are affected. The system-wide budget is
+enforced across all domains.
+.TP
+.B priority-max
+Reports the maximum configurable port priority value within the reported
+power domain. The valid range for prio is 0 to priority-max (inclusive).
+.TP
+.B priority
+Reports the currently configured port priority within the reported power
+domain. Lower numeric values indicate higher priority: 0 is the highest
+priority.
 
 .RE
 .TP
@@ -1930,6 +1951,16 @@ This parameter manages c33 PSE Admin operations in accordance with the IEEE
 This parameter manages c33 PSE Available Power Limit in mW, in accordance
 with the IEEE 802.3-2022 33.2.4.4 Variables (pse_available_power)
 specification.
+.TP
+.B prio \ N
+Set the port priority, scoped to the port's power domain
+as reported by power-domain-index. Lower values indicate higher
+priority; 0 is the highest. The valid range is 0 to the
+priority-max reported by --show-pse.
+
+When a single domain exceeds its budget, ports in that domain are
+powered up/down by priority (highest first for power-up; lowest shed
+first).
 
 .RE
 .TP

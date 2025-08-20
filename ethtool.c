@@ -6339,6 +6339,7 @@ static const struct option args[] = {
 		.xhelp	= "		[ podl-pse-admin-control enable|disable ]\n"
 			  "		[ c33-pse-admin-control enable|disable ]\n"
 			  "		[ c33-pse-avail-pw-limit N ]\n"
+			  "		[ prio N ]\n"
 	},
 	{
 		.opts	= "--flash-module-firmware",
