@@ -475,6 +475,66 @@ int nl_gpse(struct cmd_context *ctx)
 	return ret;
 }
 
+static const char *pse_events_name(u64 val)
+{
+	switch (val) {
+	case ETHTOOL_PSE_EVENT_OVER_CURRENT:
+		return "over-current";
+	case ETHTOOL_PSE_EVENT_OVER_TEMP:
+		return "over-temperature";
+	case ETHTOOL_C33_PSE_EVENT_DETECTION:
+		return "detection";
+	case ETHTOOL_C33_PSE_EVENT_CLASSIFICATION:
+		return "classification";
+	case ETHTOOL_C33_PSE_EVENT_DISCONNECTION:
+		return "disconnection";
+	case ETHTOOL_PSE_EVENT_OVER_BUDGET:
+		return "over-budget";
+	case ETHTOOL_PSE_EVENT_SW_PW_CONTROL_ERROR:
+		return "software power control error";
+	default:
+		return "unknown";
+	}
+}
+
+int pse_ntf_cb(const struct nlmsghdr *nlhdr, void *data)
+{
+	const struct nlattr *tb[ETHTOOL_A_PSE_NTF_MAX + 1] = {};
+	struct nl_context *nlctx = data;
+	DECLARE_ATTR_TB_INFO(tb);
+	u64 val;
+	int ret, i;
+
+	ret = mnl_attr_parse(nlhdr, GENL_HDRLEN, attr_cb, &tb_info);
+	if (ret < 0)
+		return MNL_CB_OK;
+
+	if (!tb[ETHTOOL_A_PSE_NTF_EVENTS])
+		return MNL_CB_OK;
+
+	nlctx->devname = get_dev_name(tb[ETHTOOL_A_PSE_NTF_HEADER]);
+	if (!dev_ok(nlctx))
+		return MNL_CB_OK;
+
+	open_json_object(NULL);
+	print_string(PRINT_ANY, "ifname", "PSE event for %s:\n",
+		     nlctx->devname);
+	open_json_array("events", "Events:");
+	val = attr_get_uint(tb[ETHTOOL_A_PSE_NTF_EVENTS]);
+	for (i = 0;
+	     i < mnl_attr_get_payload_len(tb[ETHTOOL_A_PSE_NTF_EVENTS]) * 8;
+	     i++)
+		if (val & 1 << i)
+			print_string(PRINT_ANY, NULL, " %s",
+				     pse_events_name(val & 1 << i));
+	close_json_array("\n");
+	if (ret < 0)
+		return MNL_CB_OK;
+
+	close_json_object();
+	return MNL_CB_OK;
+}
+
 /* PSE_SET */
 
 static const struct lookup_entry_u32 podl_pse_admin_control_values[] = {
