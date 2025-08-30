@@ -1106,6 +1106,9 @@ static int parse_rxfhashopts(char *optstr, u32 *data)
 		case 'e':
 			*data |= RXH_GTP_TEID;
 			break;
+		case 'l':
+			*data |= RXH_IP6_FL;
+			break;
 		case 'r':
 			*data |= RXH_DISCARD;
 			break;
@@ -1140,6 +1143,8 @@ static char *unparse_rxfhashopts(u64 opts)
 			strcat(buf, "L4 bytes 2 & 3 [TCP/UDP dst port]\n");
 		if (opts & RXH_GTP_TEID)
 			strcat(buf, "GTP TEID\n");
+		if (opts & RXH_IP6_FL)
+			strcat(buf, "IPv6 Flow Label\n");
 	} else {
 		sprintf(buf, "None");
 	}
@@ -6023,7 +6028,7 @@ static const struct option args[] = {
 		.help	= "Configure Rx network flow classification options or rules",
 		.xhelp	= "		rx-flow-hash tcp4|udp4|ah4|esp4|sctp4|"
 			  "gtpc4|gtpc4t|gtpu4|gtpu4e|gtpu4u|gtpu4d|tcp6|udp6|ah6|esp6|sctp6"
-			  "|gtpc6|gtpc6t|gtpu6|gtpu6e|gtpu6u|gtpu6d m|v|t|s|d|f|n|r|e... [context %d] |\n"
+			  "|gtpc6|gtpc6t|gtpu6|gtpu6e|gtpu6u|gtpu6d m|v|t|s|d|f|n|r|e|l... [context %d] |\n"
 			  "		flow-type ether|ip4|tcp4|udp4|sctp4|ah4|esp4|"
 			  "ip6|tcp6|udp6|ah6|esp6|sctp6\n"
 			  "			[ src %x:%x:%x:%x:%x:%x [m %x:%x:%x:%x:%x:%x] ]\n"
