@@ -79,6 +79,10 @@ static struct {
 		.cmd	= ETHTOOL_MSG_PLCA_NTF,
 		.cb	= plca_get_cfg_reply_cb,
 	},
+	{
+		.cmd	= ETHTOOL_MSG_PSE_NTF,
+		.cb	= pse_ntf_cb,
+	},
 };
 
 static void clear_filter(struct nl_context *nlctx)
@@ -194,7 +198,10 @@ static struct monitor_option monitor_opts[] = {
 		.pattern	= "--get-plca-cfg|--set-plca-cfg",
 		.cmd		= ETHTOOL_MSG_PLCA_NTF,
 	},
-
+	{
+		.pattern	= "--pse-event",
+		.cmd		= ETHTOOL_MSG_PSE_NTF,
+	},
 };
 
 static bool pattern_match(const char *s, const char *pattern)
