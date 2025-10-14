@@ -44,6 +44,64 @@ fec_mode_walk(unsigned int idx, const char *name, bool val, void *data)
 	print_string(PRINT_ANY, NULL, " %s", name);
 }
 
+static void fec_show_hist_bin(const struct nlattr *hist)
+{
+	const struct nlattr *tb[ETHTOOL_A_FEC_HIST_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	unsigned int i, lanes, bin_high, bin_low;
+	uint64_t val, *vals;
+	int ret;
+
+	ret = mnl_attr_parse_nested(hist, attr_cb, &tb_info);
+	if (ret < 0)
+		return;
+
+	if (!tb[ETHTOOL_A_FEC_HIST_BIN_LOW] || !tb[ETHTOOL_A_FEC_HIST_BIN_HIGH])
+		return;
+
+	bin_high = mnl_attr_get_u32(tb[ETHTOOL_A_FEC_HIST_BIN_HIGH]);
+	bin_low  = mnl_attr_get_u32(tb[ETHTOOL_A_FEC_HIST_BIN_LOW]);
+	/* Bin value is uint, so it may be u32 or u64 depeding on the value */
+	if (mnl_attr_validate(tb[ETHTOOL_A_FEC_HIST_BIN_VAL], MNL_TYPE_U32) < 0)
+		val = mnl_attr_get_u64(tb[ETHTOOL_A_FEC_HIST_BIN_VAL]);
+	else
+		val = mnl_attr_get_u32(tb[ETHTOOL_A_FEC_HIST_BIN_VAL]);
+
+	if (is_json_context()) {
+		print_u64(PRINT_JSON, "bin_low", NULL, bin_low);
+		print_u64(PRINT_JSON, "bin_high", NULL, bin_high);
+		print_u64(PRINT_JSON, "total", NULL, val);
+	} else {
+		printf("  fec_symbols_err_%d", bin_low);
+		if (bin_low != bin_high)
+			printf("_to_%d", bin_high);
+		printf(": %" PRIu64, val);
+	}
+	if (!tb[ETHTOOL_A_FEC_HIST_BIN_VAL_PER_LANE]) {
+		if (!is_json_context())
+			print_nl();
+		return;
+	}
+
+	vals = mnl_attr_get_payload(tb[ETHTOOL_A_FEC_HIST_BIN_VAL_PER_LANE]);
+	lanes = mnl_attr_get_payload_len(tb[ETHTOOL_A_FEC_HIST_BIN_VAL_PER_LANE]) / 8;
+	if (is_json_context())
+		open_json_array("lanes", "");
+	else
+		printf(" [ per_lane:");
+	for (i = 0; i < lanes; i++) {
+		if (is_json_context())
+			print_u64(PRINT_JSON, NULL, NULL, *vals++);
+		else
+			printf("%s %" PRIu64, i ? "," : "", *vals++);
+	}
+
+	if (is_json_context())
+		close_json_array("");
+	else
+		printf(" ]\n");
+}
+
 static int fec_show_stats(const struct nlattr *nest)
 {
 	const struct nlattr *tb[ETHTOOL_A_FEC_STAT_MAX + 1] = {};
@@ -87,26 +145,44 @@ static int fec_show_stats(const struct nlattr *nest)
 		lanes = mnl_attr_get_payload_len(tb[stats[i].attr]) / 8 - 1;
 
 		if (!is_json_context()) {
-			fprintf(stdout, "  %s: %" PRIu64 "\n",
+			fprintf(stdout, "  %s: %" PRIu64,
 				stats[i].name, *vals++);
 		} else {
 			open_json_object(stats[i].name);
 			print_u64(PRINT_JSON, "total", NULL, *vals++);
 		}
 
-		if (lanes)
+		if (lanes) {
 			open_json_array("lanes", "");
+			printf(" [ per_lane:");
+		}
+
 		for (l = 0; l < lanes; l++) {
 			if (!is_json_context())
-				fprintf(stdout, "    Lane %d: %" PRIu64 "\n",
-					l, *vals++);
+				printf("%s %" PRIu64, l ? "," : "", *vals++);
 			else
 				print_u64(PRINT_JSON, NULL, NULL, *vals++);
 		}
-		if (lanes)
+		if (lanes) {
 			close_json_array("");
+			printf(" ]\n");
+		}
 
 		close_json_object();
+	}
+
+	if (tb[ETHTOOL_A_FEC_STAT_HIST]) {
+		const struct nlattr *attr;
+
+		open_json_array("hist", "");
+		mnl_attr_for_each_nested(attr, nest) {
+			if (mnl_attr_get_type(attr) == ETHTOOL_A_FEC_STAT_HIST) {
+				open_json_object(NULL);
+				fec_show_hist_bin(attr);
+				close_json_object();
+			}
+		}
+		close_json_array("");
 	}
 	close_json_object();
 
