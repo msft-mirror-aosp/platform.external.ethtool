@@ -47,11 +47,11 @@
 				"type": "integer",
 				"description": "Unit: nm"
 			},
-			"module_temperature": {
+			"module_temperature_measurement": {
 				"type": "number",
 				"description": "Unit: degrees C"
 			},
-			"module_voltage": {
+			"module_voltage_measurement": {
 				"type": "number",
 				"description": "Unit: V"
 			},
