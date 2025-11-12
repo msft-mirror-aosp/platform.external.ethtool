@@ -17,6 +17,7 @@
 #include "netlink.h"
 #include "bitset.h"
 #include "parser.h"
+#include "strset.h"
 #include "ts.h"
 
 /* TSCONFIG_GET */
@@ -94,6 +95,66 @@ int nl_gtsconfig(struct cmd_context *ctx)
 
 /* TSCONFIG_SET */
 
+int tsconfig_txrx_parser(struct nl_context *nlctx, uint16_t type,
+			 const void *data __maybe_unused,
+			 struct nl_msg_buff *msgbuff,
+			 void *dest __maybe_unused)
+{
+	struct nlattr *bits_attr, *bit_attr;
+	const struct stringset *values;
+	const char *arg = *nlctx->argp;
+	unsigned int count, i;
+
+	nlctx->argp++;
+	nlctx->argc--;
+	if (netlink_init_ethnl2_socket(nlctx) < 0)
+		return -EIO;
+
+	switch (type) {
+	case ETHTOOL_A_TSCONFIG_TX_TYPES:
+		values = global_stringset(ETH_SS_TS_TX_TYPES, nlctx->ethnl2_socket);
+		break;
+	case ETHTOOL_A_TSCONFIG_RX_FILTERS:
+		values = global_stringset(ETH_SS_TS_RX_FILTERS, nlctx->ethnl2_socket);
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	count = get_count(values);
+	for (i = 0; i < count; i++) {
+		const char *name = get_string(values, i);
+
+		if (!strcmp(name, arg))
+			break;
+	}
+
+	if (i == count)
+		return -EINVAL;
+
+	if (ethnla_put_flag(msgbuff, ETHTOOL_A_BITSET_NOMASK, true))
+		return -EMSGSIZE;
+
+	bits_attr = ethnla_nest_start(msgbuff, ETHTOOL_A_BITSET_BITS);
+	if (!bits_attr)
+		return -EMSGSIZE;
+
+	bit_attr = ethnla_nest_start(msgbuff, ETHTOOL_A_BITSET_BITS_BIT);
+	if (!bit_attr) {
+		ethnla_nest_cancel(msgbuff, bits_attr);
+		return -EMSGSIZE;
+	}
+	if (ethnla_put_u32(msgbuff, ETHTOOL_A_BITSET_BIT_INDEX, i) ||
+	    ethnla_put_flag(msgbuff, ETHTOOL_A_BITSET_BIT_VALUE, true)) {
+		ethnla_nest_cancel(msgbuff, bits_attr);
+		ethnla_nest_cancel(msgbuff, bit_attr);
+		return -EMSGSIZE;
+	}
+	mnl_attr_nest_end(msgbuff->nlhdr, bit_attr);
+	mnl_attr_nest_end(msgbuff->nlhdr, bits_attr);
+	return 0;
+}
+
 static const struct param_parser stsconfig_params[] = {
 	{
 		.arg		= "index",
@@ -107,6 +168,20 @@ static const struct param_parser stsconfig_params[] = {
 		.type		= ETHTOOL_A_TS_HWTSTAMP_PROVIDER_QUALIFIER,
 		.group		= ETHTOOL_A_TSCONFIG_HWTSTAMP_PROVIDER,
 		.handler	= tsinfo_qualifier_parser,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx",
+		.type		= ETHTOOL_A_TSCONFIG_TX_TYPES,
+		.handler	= tsconfig_txrx_parser,
+		.group		= ETHTOOL_A_TSCONFIG_TX_TYPES,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-filter",
+		.type		= ETHTOOL_A_TSCONFIG_RX_FILTERS,
+		.handler	= tsconfig_txrx_parser,
+		.group		= ETHTOOL_A_TSCONFIG_RX_FILTERS,
 		.min_argc	= 1,
 	},
 	{}
@@ -134,7 +209,7 @@ int nl_stsconfig(struct cmd_context *ctx)
 	if (ret < 0)
 		return ret;
 	if (ethnla_fill_header(msgbuff, ETHTOOL_A_TSCONFIG_HEADER,
-			       ctx->devname, 0))
+			       ctx->devname, ETHTOOL_FLAG_COMPACT_BITSETS))
 		return -EMSGSIZE;
 
 	ret = nl_parser(nlctx, stsconfig_params, NULL, PARSER_GROUP_NEST, NULL);

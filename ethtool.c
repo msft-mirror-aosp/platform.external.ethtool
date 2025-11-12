@@ -6068,6 +6068,7 @@ static const struct option args[] = {
 		.nlfunc	= nl_stsconfig,
 		.help	= "Select hardware time stamping",
 		.xhelp	= "		[ index N qualifier precise|approx ]\n"
+			  "		[ tx TX-TYPE ] [ rx-filter RX-FILTER ]\n"
 	},
 	{
 		.opts	= "-x|--show-rxfh-indir|--show-rxfh",
