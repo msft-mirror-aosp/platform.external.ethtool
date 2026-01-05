@@ -419,7 +419,7 @@ void cpsw_dump_ale(struct k3_cpsw_regdump_hdr *ale_hdr, u32 *ale_pos)
 		case ALE_ENTRY_FREE:
 			break;
 
-		case ALE_ENTRY_ADDR:
+		case ALE_ENTRY_ADDR: {
 			u32 oui_entry = cpsw_ale_get_oui_addr(ale_pos);
 
 			if (oui_entry == 0x2)
@@ -427,8 +427,9 @@ void cpsw_dump_ale(struct k3_cpsw_regdump_hdr *ale_hdr, u32 *ale_pos)
 			else
 				cpsw_ale_dump_addr(i, ale_pos);
 			break;
+		}
 
-		case ALE_ENTRY_VLAN:
+		case ALE_ENTRY_VLAN: {
 			u32 vlan_entry_type = cpsw_ale_get_vlan_entry_type(ale_pos);
 
 			if (vlan_entry_type == VLAN_INNER_ENTRY)
@@ -442,6 +443,7 @@ void cpsw_dump_ale(struct k3_cpsw_regdump_hdr *ale_hdr, u32 *ale_pos)
 			else if (vlan_entry_type & VLAN_IPV6_ENTRY_MASK)
 				cpsw_ale_dump_ipv6_entry(i, ale_pos);
 			break;
+		}
 
 		case ALE_ENTRY_VLAN_ADDR:
 			cpsw_ale_dump_vlan_addr(i, ale_pos);
