@@ -59,6 +59,7 @@ int nl_gpse(struct cmd_context *ctx);
 int nl_spse(struct cmd_context *ctx);
 int nl_flash_module_fw(struct cmd_context *ctx);
 int nl_get_phy(struct cmd_context *ctx);
+int nl_gmse(struct cmd_context *ctx);
 
 void nl_monitor_usage(void);
 
@@ -138,6 +139,7 @@ nl_get_eeprom_page(struct cmd_context *ctx __maybe_unused,
 #define nl_spse			NULL
 #define nl_flash_module_fw	NULL
 #define nl_get_phy		NULL
+#define nl_gmse			NULL
 
 #endif /* ETHTOOL_ENABLE_NETLINK */
 

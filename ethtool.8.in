@@ -639,6 +639,7 @@ lB	l.
 \-\-get\-plca\-status
 \-\-show-pse
 \-\-set-pse
+\-\-show-mse
 .TE
 .TP
 .B \-a \-\-show\-pause
@@ -1976,6 +1977,51 @@ priority-max reported by --show-pse.
 When a single domain exceeds its budget, ports in that domain are
 powered up/down by priority (highest first for power-up; lowest shed
 first).
+
+.RE
+.TP
+.B \-\-show\-mse
+Show PHY Mean Square Error (MSE) diagnostics.
+.RS 4
+.P
+Metrics follow the OPEN Alliance PHY diagnostics model (used by automotive and
+industrial PHYs). Numeric scaling, sampling windows, and update intervals are
+vendor specific and reported by the capability block.
+.P
+Values are raw snapshots from the PHY DSP. Lower values generally indicate
+better signal quality; 0 is ideal. Interpret values relative to the reported
+max-* scales for this PHY and link mode.
+.P
+The set of returned channels depends on PHY support. When per-channel data is
+available, Channel A/B/C/D nests are returned. Otherwise, the kernel may return
+a single WORST or LINK aggregate snapshot.
+.TP
+.B Capabilities
+Driver-provided scale and timing:
+.RS 4
+.TP
+.B max\-average\-mse
+Scale for average MSE values.
+.TP
+.B max\-peak\-mse
+Scale for peak MSE values. Present only if the PHY reports peak-mse and/or
+worst-peak-mse.
+.TP
+.B refresh\-rate\-ps
+Typical hardware update interval in picoseconds.
+.TP
+.B symbols\-per\-sample
+Number of symbols collected per hardware sample.
+.RE
+.TP
+.B Snapshots
+One nest per selector (Channel A/B/C/D, WORST, or LINK). Each contains the
+metrics supported by the PHY: average-mse and optionally peak-mse and/or
+worst-peak-mse. Values are raw and must be interpreted using the capability
+scales above.
+.P
+Short windows (low refresh-rate-ps or few symbols-per-sample) can yield high
+variance; userspace can improve stability by polling and averaging over time.
 
 .RE
 .TP

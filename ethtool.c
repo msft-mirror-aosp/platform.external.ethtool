@@ -6372,6 +6372,13 @@ static const struct option args[] = {
 		.help	= "List PHYs"
 	},
 	{
+		.opts	= "--show-mse",
+		.targets_phy	= true,
+		.json	= true,
+		.nlfunc	= nl_gmse,
+		.help	= "Show Mean Square Error (MSE) diagnostics",
+	},
+	{
 		.opts	= "-h|--help",
 		.no_dev	= true,
 		.func	= show_usage,
