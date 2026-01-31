@@ -19,6 +19,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <limits.h>
 #include <endian.h>
 #include <sys/ioctl.h>
 #define __UAPI_DEF_IF_IFNAMSIZ	1
