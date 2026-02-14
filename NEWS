@@ -1,3 +1,19 @@
+Version 6.19 - Feb 14, 2026
+	* Feature: support HW timestamp configuration (--set-hwtimestamp-cfg)
+	* Feature: display HW timestamp source (-T)
+	* Feature: support PLCA notifications (--get/set-plca-cfg)
+	* Feature: add PSE priority management support (--show/set-pse)
+	* Feature: support PSE notifications (--show/set-pse)
+	* Feature: support configuring RSS on IPv6 Flow Label (-n/-N)
+	* Feature: support FEC bit error histograms (--show-fec)
+	* Feature: register dump decoding for TI K3 CPSW and its ALE table (-d)
+	* Fix: fix missing headers in text output
+	* Fix: fix print_string when the value is NULL (-Werror=format-security)
+	* Fix: fix JSON output of SFP diagnostics
+	* Fix: fix duplicated JSON keys in module info
+	* Misc: clarify that symmetric RSS may be on by default (-x/-X)
+	* Misc: add AppStream metainfo file to %files section
+
 Version 6.15 - June 23, 2025
 	* Feature: support OR-XOR symmetric RSS hash type (-x/-X)
 	* Feature: dump registers for hibmcge driver (-d)
