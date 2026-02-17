@@ -1901,13 +1901,13 @@ support. It corresponds to IEEE 802.3-2022 30.9.1.1.5
 .TP
 .B c33-pse-extended-state
 This attribute indicates the Extended state of the c33 PSE. The extended
-state correlated with the c33 PSE Extended Substate allows to have more
+state correlated with the c33 PSE Extended Substate allows one to have more
 detail on the c33 PSE current error state.
 It corresponds to IEEE 802.3-2022 33.2.4.4 Variables.
 .TP
 .B c33-pse-extended-substate
 This attribute indicates the Extended substate of the c33 PSE. Correlated
-with the c33 PSE Extended state value, it allows to have more detail on the
+with the c33 PSE Extended state value, it allows one to have more detail on the
 c33 PSE current error state.
 .TP
 .B c33-pse-power-class
@@ -2075,7 +2075,7 @@ If the PHY's upstream_type is
 , this field indicates the phy_index of the upstream phy.
 .TP
 .B upstream_sfp_name
-If the PHY is withing an SFP/SFF module, this field contains the name of the
+If the PHY is within an SFP/SFF module, this field contains the name of the
 upstream SFP bus.
 
 .SH BUGS
