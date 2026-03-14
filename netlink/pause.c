@@ -116,6 +116,7 @@ static int show_pause_stats(const struct nlattr *nest)
 	} stats[] = {
 		{ ETHTOOL_A_PAUSE_STAT_TX_FRAMES, "tx_pause_frames" },
 		{ ETHTOOL_A_PAUSE_STAT_RX_FRAMES, "rx_pause_frames" },
+		{ ETHTOOL_A_PAUSE_STAT_TX_PAUSE_STORM_EVENTS, "tx_pause_storm_events" },
 	};
 	bool header = false;
 	unsigned int i;
