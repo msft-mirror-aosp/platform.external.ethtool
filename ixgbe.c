@@ -732,7 +732,7 @@ ixgbe_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		for (i = 0; i < 8; i++)
 			fprintf(stdout,
 			"0x%05X: RTTPT2C%d    (Tx Packet Plane T2 Config %d)    0x%08X\n",
-			0x0CD20 + (4 * i), i, i, regs_buff[865]);
+			0x0CD20 + (4 * i), i, i, regs_buff[865 + i]);
 
 		if (mac_type < ixgbe_mac_x550)
 			for (i = 0; i < 8; i++)
