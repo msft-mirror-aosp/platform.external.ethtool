@@ -198,6 +198,8 @@ ethtool \- query or control network driver and hardware settings
 .BN tx\-aggr\-max\-bytes
 .BN tx\-aggr\-max\-frames
 .BN tx\-aggr\-time\-usecs
+.BN rx\-cqe\-frames
+.BN rx\-cqe\-nsecs
 .HP
 .B ethtool \-g|\-\-show\-ring
 .I devname

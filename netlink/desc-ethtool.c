@@ -249,6 +249,8 @@ static const struct pretty_nla_desc __coalesce_desc[] = {
 	NLATTR_DESC_U32(ETHTOOL_A_COALESCE_TX_AGGR_TIME_USECS),
 	NLATTR_DESC_NESTED(ETHTOOL_A_COALESCE_RX_PROFILE, profile),
 	NLATTR_DESC_NESTED(ETHTOOL_A_COALESCE_TX_PROFILE, profile),
+	NLATTR_DESC_U32(ETHTOOL_A_COALESCE_RX_CQE_FRAMES),
+	NLATTR_DESC_U32(ETHTOOL_A_COALESCE_RX_CQE_NSECS),
 };
 
 static const struct pretty_nla_desc __pause_stats_desc[] = {
