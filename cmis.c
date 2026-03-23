@@ -276,7 +276,7 @@ static void cmis_show_mit_compliance(const struct cmis_memory_map *map)
 				       "nm");
 		module_print_any_float("Laser wavelength tolerance",
 				       (((map->page_01h[CMIS_WAVELENGTH_TOL_MSB] << 8) |
-				        map->page_01h[CMIS_NOM_WAVELENGTH_LSB]) * 0.05),
+				        map->page_01h[CMIS_WAVELENGTH_TOL_LSB]) * 0.005),
 				       "nm");
 	}
 }
