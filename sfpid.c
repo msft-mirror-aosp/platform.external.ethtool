@@ -362,7 +362,6 @@ static void sff8079_show_wavelength_or_copper_compliance(const __u8 *id)
 					"passive_cu_cmplnce.",
 					id[60], description);
 	} else if (id[8] & (1 << 3)) {
-		printf("\t%-41s : 0x%02x", "Active Cu cmplnce.", id[60]);
 		switch (id[60]) {
 		case 0x00:
 			strncpy(description, "unspecified",
