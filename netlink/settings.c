@@ -671,6 +671,8 @@ static const char *const names_link_ext_state[] = {
 	[ETHTOOL_LINK_EXT_STATE_POWER_BUDGET_EXCEEDED]	= "Power budget exceeded",
 	[ETHTOOL_LINK_EXT_STATE_OVERHEAT]		= "Overheat",
 	[ETHTOOL_LINK_EXT_STATE_MODULE]			= "Module",
+	[ETHTOOL_LINK_EXT_STATE_OTP_SPEED_VIOLATION]	= "OTP speed violation",
+	[ETHTOOL_LINK_EXT_STATE_BMC_REQUEST_DOWN]	= "BMC request down",
 };
 
 static const char *const names_autoneg_link_ext_substate[] = {
