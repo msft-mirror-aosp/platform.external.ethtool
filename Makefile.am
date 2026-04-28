@@ -56,11 +56,17 @@ ethtool_SOURCES += \
 		  netlink/phy.c \
 		  netlink/tsconfig.c \
 		  netlink/mse.c \
+		  uapi/linux/const.h uapi/linux/ethtool.h \
 		  uapi/linux/ethtool_netlink.h \
 		  uapi/linux/ethtool_netlink_generated.h \
-		  uapi/linux/netlink.h uapi/linux/genetlink.h \
-		  uapi/linux/rtnetlink.h uapi/linux/if_link.h \
-		  uapi/linux/if.h uapi/linux/hdlc/ioctl.h
+		  uapi/linux/genetlink.h uapi/linux/hdlc/ioctl.h \
+		  uapi/linux/if.h uapi/linux/if_addr.h \
+		  uapi/linux/if_ether.h uapi/linux/if_link.h \
+		  uapi/linux/libc-compat.h uapi/linux/neighbour.h \
+		  uapi/linux/net_tstamp.h uapi/linux/netlink.h \
+		  uapi/linux/posix_types.h uapi/linux/rtnetlink.h \
+		  uapi/linux/socket.h uapi/linux/stddef.h \
+		  uapi/linux/typelimits.h uapi/linux/types.h
 AM_CPPFLAGS += @MNL_CFLAGS@
 LDADD += @MNL_LIBS@
 endif
