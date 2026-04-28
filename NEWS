@@ -1,3 +1,10 @@
+Version 7.0 - Apr 28, 2026
+	* Feature: support MSE display (--show-mse)
+	* Feature: add 2 new link_ext_state names
+	* Fix: fix index calculation in ixgbe register dump (-d)
+	* Fix: cmis wavelength tolerance output (-m)
+	* Fix: duplicate sfpid Active Cu compliance output (-m)
+
 Version 6.19 - Feb 14, 2026
 	* Feature: support HW timestamp configuration (--set-hwtimestamp-cfg)
 	* Feature: display HW timestamp source (-T)
