@@ -96,6 +96,11 @@ int coalesce_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 	show_u32("tx-aggr-time-usecs", "tx-aggr-time-usecs:\t",
 		 tb[ETHTOOL_A_COALESCE_TX_AGGR_TIME_USECS]);
 	show_cr();
+	show_u32("rx-cqe-frames", "rx-cqe-frames:\t\t",
+		 tb[ETHTOOL_A_COALESCE_RX_CQE_FRAMES]);
+	show_u32("rx-cqe-nsecs", "rx-cqe-nsecs:\t\t",
+		 tb[ETHTOOL_A_COALESCE_RX_CQE_NSECS]);
+	show_cr();
 
 	close_json_object();
 
@@ -289,6 +294,18 @@ static const struct param_parser scoalesce_params[] = {
 	{
 		.arg		= "tx-aggr-time-usecs",
 		.type		= ETHTOOL_A_COALESCE_TX_AGGR_TIME_USECS,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-cqe-frames",
+		.type		= ETHTOOL_A_COALESCE_RX_CQE_FRAMES,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-cqe-nsecs",
+		.type		= ETHTOOL_A_COALESCE_RX_CQE_NSECS,
 		.handler	= nl_parse_direct_u32,
 		.min_argc	= 1,
 	},

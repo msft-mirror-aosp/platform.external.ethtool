@@ -259,6 +259,8 @@ _ethtool_coalesce()
 		[tx-aggr-max-bytes]=1
 		[tx-aggr-max-frames]=1
 		[tx-aggr-time-usecs]=1
+		[rx-cqe-frames]=1
+		[rx-cqe-nsecs]=1
 	)
 
 	case "$prev" in

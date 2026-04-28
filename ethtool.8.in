@@ -198,6 +198,8 @@ ethtool \- query or control network driver and hardware settings
 .BN tx\-aggr\-max\-bytes
 .BN tx\-aggr\-max\-frames
 .BN tx\-aggr\-time\-usecs
+.BN rx\-cqe\-frames
+.BN rx\-cqe\-nsecs
 .HP
 .B ethtool \-g|\-\-show\-ring
 .I devname
@@ -1550,7 +1552,13 @@ Get the current tx copybreak value in bytes.
 Get the current tx copybreak buffer size in bytes.
 .TP
 .B pfc\-prevention\-tout
-Get the current pfc prevention timeout value in msecs.
+Get the PFC storm prevention timeout value in milliseconds.
+This timeout value applies to both PFC (Priority Flow Control) and standard
+link-level pause storms (IEEE 802.3x). A pause storm occurs when a device
+continously sends TX pause frames to the switch, resulting in persistent
+backpressure. When enabled, if the NIC detects that pause assertion has
+exceeded the configured timeout, the device takes protective action (stops
+sending pause frames) to prevent a complete traffic stall.
 .RE
 .TP
 .B \-\-set\-tunable
@@ -1567,7 +1575,16 @@ Set the tx copybreak value in bytes.
 Set the tx copybreak buffer size in bytes.
 .TP
 .BI pfc\-prevention\-tout \ N
-Set pfc prevention timeout in msecs. Value of 0 means disable and 65535 means auto.
+Set the PFC storm prevention timeout in milliseconds. The range of valid
+values is device specific. Special values:
+.RS 4
+.TP
+.B 0
+Disable storm prevention.
+.TP
+.B 65535
+Use device-local default timeout (auto).
+.RE
 .RE
 .TP
 .B \-\-reset

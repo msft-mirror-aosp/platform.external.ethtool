@@ -5925,6 +5925,8 @@ static const struct option args[] = {
 			  "		[tx-aggr-max-bytes N]\n"
 			  "		[tx-aggr-max-frames N]\n"
 			  "		[tx-aggr-time-usecs N]\n"
+			  "		[rx-cqe-frames N]\n"
+			  "		[rx-cqe-nsecs N]\n"
 	},
 	{
 		.opts	= "-g|--show-ring",
