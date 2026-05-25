@@ -500,6 +500,7 @@ static int sff8079_get_eeprom_page(struct cmd_context *ctx, u8 i2c_address,
 
 int sff8079_show_all_nl(struct cmd_context *ctx)
 {
+	bool a2h_present;
 	u8 *buf;
 	int ret;
 
@@ -516,24 +517,26 @@ int sff8079_show_all_nl(struct cmd_context *ctx)
 	if (ret)
 		goto out;
 
+	/* Check if A2h page is present */
+	a2h_present = buf[92] & (1 << 6);
+
+	if (a2h_present) {
+		/* Read A2h page */
+		ret = sff8079_get_eeprom_page(ctx, SFF8079_I2C_ADDRESS_HIGH,
+					      buf + ETH_MODULE_SFF_8079_LEN);
+		if (ret) {
+			fprintf(stderr, "Failed to read Page A2h\n");
+			goto out;
+		}
+	}
+
 	new_json_obj(ctx->json);
 	open_json_object(NULL);
 	sff8079_show_all_common(buf);
 
-	/* Finish if A2h page is not present */
-	if (!(buf[92] & (1 << 6)))
-		goto out_json;
+	if (a2h_present)
+		sff8472_show_all(buf);
 
-	/* Read A2h page */
-	ret = sff8079_get_eeprom_page(ctx, SFF8079_I2C_ADDRESS_HIGH,
-				      buf + ETH_MODULE_SFF_8079_LEN);
-	if (ret) {
-		fprintf(stderr, "Failed to read Page A2h.\n");
-		goto out_json;
-	}
-
-	sff8472_show_all(buf);
-out_json:
 	close_json_object();
 	delete_json_obj();
 out:
