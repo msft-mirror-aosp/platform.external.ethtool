@@ -62,9 +62,11 @@
 #include "cmis.h"
 #include "netlink/extapi.h"
 
+#define SFF8636_MAX_PAGES	4
+
 struct sff8636_memory_map {
 	const __u8 *lower_memory;
-	const __u8 *upper_memory[4];
+	const __u8 *upper_memory[SFF8636_MAX_PAGES];
 #define page_00h upper_memory[0x0]
 #define page_03h upper_memory[0x3]
 };
@@ -1078,21 +1080,72 @@ sff8636_memory_map_init_pages(struct cmd_context *ctx,
 	return 0;
 }
 
-int sff8636_show_all_nl(struct cmd_context *ctx)
+static void sff8636_hex_dump(struct cmd_context *ctx,
+			     const struct sff8636_memory_map *map)
+{
+	struct module_eeprom_dump dump = {
+		.length = SFF8636_PAGE_SIZE,
+		.i2c_address = SFF8636_I2C_ADDRESS,
+	};
+	u8 page;
+
+	new_json_obj(ctx->json);
+	if (is_json_context()) {
+		open_json_object(NULL);
+		open_json_array("pages", "");
+	}
+
+	dump.data = map->lower_memory;
+	module_dump_eeprom_hex(&dump);
+
+	for (page = 0; page < SFF8636_MAX_PAGES; page++) {
+		const __u8 *buf = map->upper_memory[page];
+
+		if (!buf)
+			continue;
+
+		/* Upper memory starts at one page size into the
+		 * buffer, since pages are accessed at offset between
+		 * page size and twice the page size.
+		 */
+		dump.offset = SFF8636_PAGE_SIZE;
+		dump.page = page;
+		dump.data = buf + SFF8636_PAGE_SIZE;
+		module_dump_eeprom_hex(&dump);
+	}
+
+	if (is_json_context()) {
+		close_json_array("");
+		close_json_object();
+	}
+	delete_json_obj();
+}
+
+static void sff8636_pretty_print(struct cmd_context *ctx,
+				 const struct sff8636_memory_map *map)
+{
+	new_json_obj(ctx->json);
+	open_json_object(NULL);
+
+	sff8636_show_all_common(map);
+
+	close_json_object();
+	delete_json_obj();
+}
+
+int sff8636_show_all_nl(struct cmd_context *ctx, bool dump_pages)
 {
 	struct sff8636_memory_map map = {};
 	int ret;
 
-	new_json_obj(ctx->json);
-	open_json_object(NULL);
-
 	ret = sff8636_memory_map_init_pages(ctx, &map);
 	if (ret < 0)
 		return ret;
-	sff8636_show_all_common(&map);
 
-	close_json_object();
-	delete_json_obj();
+	if (dump_pages)
+		sff8636_hex_dump(ctx, &map);
+	else
+		sff8636_pretty_print(ctx, &map);
 
 	return 0;
 }

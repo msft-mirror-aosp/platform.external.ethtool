@@ -1022,6 +1022,64 @@ void cmis_show_all_ioctl(const __u8 *id)
 	cmis_show_all_common(&map);
 }
 
+static void cmis_hex_dump(struct cmd_context *ctx,
+			  const struct cmis_memory_map *map)
+{
+	struct module_eeprom_dump dump = {
+		.length = CMIS_PAGE_SIZE,
+		.i2c_address = CMIS_I2C_ADDRESS,
+		.print_bank = true,
+	};
+	u8 bank, page;
+
+	new_json_obj(ctx->json);
+	if (is_json_context()) {
+		open_json_object(NULL);
+		open_json_array("pages", "");
+	}
+
+	dump.data = map->lower_memory;
+	module_dump_eeprom_hex(&dump);
+
+	for (bank = 0; bank < CMIS_MAX_BANKS; bank++) {
+		for (page = 0; page < CMIS_MAX_PAGES; page++) {
+			const __u8 *buf = map->upper_memory[bank][page];
+
+			if (!buf)
+				continue;
+
+			/* Upper memory starts at one page size into
+			 * the buffer, since pages are accessed at
+			 * offset between page size and twice the
+			 * page size.
+			 */
+			dump.offset = CMIS_PAGE_SIZE;
+			dump.page = page;
+			dump.bank = bank;
+			dump.data = buf + CMIS_PAGE_SIZE;
+			module_dump_eeprom_hex(&dump);
+		}
+	}
+
+	if (is_json_context()) {
+		close_json_array("");
+		close_json_object();
+	}
+	delete_json_obj();
+}
+
+static void cmis_pretty_print(struct cmd_context *ctx,
+			      const struct cmis_memory_map *map)
+{
+	new_json_obj(ctx->json);
+	open_json_object(NULL);
+
+	cmis_show_all_common(map);
+
+	close_json_object();
+	delete_json_obj();
+}
+
 static void cmis_request_init(struct ethtool_module_eeprom *request, u8 bank,
 			      u8 page, u32 offset)
 {
@@ -1117,21 +1175,19 @@ cmis_memory_map_init_pages(struct cmd_context *ctx,
 	return 0;
 }
 
-int cmis_show_all_nl(struct cmd_context *ctx)
+int cmis_show_all_nl(struct cmd_context *ctx, bool dump_pages)
 {
 	struct cmis_memory_map map = {};
 	int ret;
 
-	new_json_obj(ctx->json);
-	open_json_object(NULL);
-
 	ret = cmis_memory_map_init_pages(ctx, &map);
 	if (ret < 0)
 		return ret;
-	cmis_show_all_common(&map);
 
-	close_json_object();
-	delete_json_obj();
+	if (dump_pages)
+		cmis_hex_dump(ctx, &map);
+	else
+		cmis_pretty_print(ctx, &map);
 
 	return 0;
 }
