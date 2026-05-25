@@ -403,6 +403,7 @@ ethtool \- query or control network driver and hardware settings
 .I devname
 .B2 raw on off
 .B2 hex on off
+.B2 pages on off
 .BN offset
 .BN length
 .BN page
@@ -1431,6 +1432,24 @@ allowed. In such a case
 and
 .I length
 parameters are treated relatively to EEPROM page boundaries.
+When
+.B hex on pages on
+is specified, dumps all relevant EEPROM pages in hex, organized by page.
+Each page is preceded by a header identifying the page number. For banked pages,
+the bank number is also shown, and for SFP modules, the I2C address is also
+shown, as different parts of the EEPROM memory map are accessible via different
+I2C addresses. The set of pages dumped matches what the pretty-printer reads for
+each module type. This option cannot be combined with
+.I offset, length, page, bank
+or
+.I i2c
+parameters. When combined with
+.BI \-\-json ,
+the output is a JSON object with a "pages" array. Each element is an
+object with the fields "bank", "page", "offset", "i2c_address" and "data",
+emitted unconditionally regardless of module type. "data" is an array of
+lowercase hex strings, one per byte; its length is the length of the
+memory block.
 .TP
 .B \-\-show\-priv\-flags
 Queries the specified network device for its private flags.  The
