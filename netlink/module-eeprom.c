@@ -25,6 +25,7 @@ struct cmd_params {
 	unsigned long present;
 	u8 dump_hex;
 	u8 dump_raw;
+	u8 dump_pages;
 	u32 offset;
 	u32 length;
 	u32 page;
@@ -81,6 +82,12 @@ static const struct param_parser getmodule_params[] = {
 		.arg		= "i2c",
 		.handler	= nl_parse_direct_u32,
 		.dest_offset	= offsetof(struct cmd_params, i2c_address),
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "pages",
+		.handler	= nl_parse_u8bool,
+		.dest_offset	= offsetof(struct cmd_params, dump_pages),
 		.min_argc	= 1,
 	},
 	{}
@@ -207,7 +214,7 @@ static int eeprom_dump_hex(struct cmd_context *ctx)
 	return 0;
 }
 
-static int eeprom_parse(struct cmd_context *ctx)
+static int eeprom_parse(struct cmd_context *ctx, bool dump_pages)
 {
 	struct ethtool_module_eeprom request = {
 		.length = 1,
@@ -228,18 +235,18 @@ static int eeprom_parse(struct cmd_context *ctx)
 	case MODULE_ID_GBIC:
 	case MODULE_ID_SOLDERED_MODULE:
 	case MODULE_ID_SFP:
-		return sff8079_show_all_nl(ctx, false);
+		return sff8079_show_all_nl(ctx, dump_pages);
 	case MODULE_ID_QSFP:
 	case MODULE_ID_QSFP28:
 	case MODULE_ID_QSFP_PLUS:
-		return sff8636_show_all_nl(ctx, false);
+		return sff8636_show_all_nl(ctx, dump_pages);
 	case MODULE_ID_QSFP_DD:
 	case MODULE_ID_OSFP:
 	case MODULE_ID_DSFP:
 	case MODULE_ID_QSFP_PLUS_CMIS:
 	case MODULE_ID_SFP_DD_CMIS:
 	case MODULE_ID_SFP_PLUS_CMIS:
-		return cmis_show_all_nl(ctx, false);
+		return cmis_show_all_nl(ctx, dump_pages);
 #endif
 	default:
 		/* If we cannot recognize the memory map, default to dumping
@@ -272,10 +279,28 @@ int nl_getmodule(struct cmd_context *ctx)
 		return -EINVAL;
 	}
 
+	if (getmodule_cmd_params.dump_pages && !getmodule_cmd_params.dump_hex) {
+		fprintf(stderr, "Pages dump requires hex on\n");
+		return -EINVAL;
+	}
+
+	if (getmodule_cmd_params.dump_pages &&
+	    (getmodule_cmd_params.present & (1 << PARAM_PAGE |
+					     1 << PARAM_BANK |
+					     1 << PARAM_OFFSET |
+					     1 << PARAM_LENGTH |
+					     1 << PARAM_I2C))) {
+		fprintf(stderr,
+			"Pages dump cannot be combined with offset, length, page, bank or i2c\n");
+		return -EINVAL;
+	}
+
 	/* When complete hex/raw dump of the EEPROM is requested, fallback to
-	 * ioctl. Netlink can only request specific pages.
+	 * ioctl. Netlink can only request specific pages. Skip fallback when
+	 * pages dump is requested, as it handles page selection internally.
 	 */
 	if ((getmodule_cmd_params.dump_hex || getmodule_cmd_params.dump_raw) &&
+	    !getmodule_cmd_params.dump_pages &&
 	    !(getmodule_cmd_params.present & (1 << PARAM_PAGE |
 					      1 << PARAM_BANK |
 					      1 << PARAM_I2C))) {
@@ -300,7 +325,11 @@ int nl_getmodule(struct cmd_context *ctx)
 	if (request.page && !request.offset)
 		request.offset = 128;
 
-	if (getmodule_cmd_params.dump_hex || getmodule_cmd_params.dump_raw) {
+	if (getmodule_cmd_params.dump_pages) {
+		ret = eeprom_parse(ctx, true);
+		if (ret < 0)
+			goto cleanup;
+	} else if (getmodule_cmd_params.dump_hex || getmodule_cmd_params.dump_raw) {
 		ret = nl_get_eeprom_page(ctx, &request);
 		if (ret < 0)
 			goto cleanup;
@@ -311,7 +340,7 @@ int nl_getmodule(struct cmd_context *ctx)
 			dump_hex(stdout, request.data, request.length,
 				 request.offset);
 	} else {
-		ret = eeprom_parse(ctx);
+		ret = eeprom_parse(ctx, false);
 		if (ret < 0)
 			goto cleanup;
 	}
