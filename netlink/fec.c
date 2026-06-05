@@ -166,6 +166,8 @@ static int fec_show_stats(const struct nlattr *nest)
 		if (lanes) {
 			close_json_array("");
 			printf(" ]\n");
+		} else {
+			printf("\n");
 		}
 
 		close_json_object();
