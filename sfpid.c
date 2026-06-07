@@ -188,8 +188,12 @@ static void sff8079_show_transceiver(const __u8 *id)
 		sprintf(value, "%s", "FC: 1200 MBytes/sec");
 	if (id[10] & (1 << 6))
 		sprintf(value, "%s", "FC: 800 MBytes/sec");
+	if (id[10] & (1 << 5))
+		sprintf(value, "%s", "FC: 1600 MBytes/sec");
 	if (id[10] & (1 << 4))
 		sprintf(value, "%s", "FC: 400 MBytes/sec");
+	if (id[10] & (1 << 3))
+		sprintf(value, "%s", "FC: 3200 MBytes/sec");
 	if (id[10] & (1 << 2))
 		sprintf(value, "%s", "FC: 200 MBytes/sec");
 	if (id[10] & (1 << 0))
