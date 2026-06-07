@@ -453,6 +453,10 @@ static void sff8636_show_transceiver(const struct sff8636_memory_map *map)
 		sprintf(value, "%s", "SONET: OC-48, short reach");
 
 	/* SAS/SATA Compliance Codes */
+	if (map->page_00h[SFF8636_SAS_COMP_OFFSET] & (SFF8636_SAS_24G))
+		sprintf(value, "%s", "SAS 24.0G");
+	if (map->page_00h[SFF8636_SAS_COMP_OFFSET] & (SFF8636_SAS_12G))
+		sprintf(value, "%s", "SAS 12.0G");
 	if (map->page_00h[SFF8636_SAS_COMP_OFFSET] & (SFF8636_SAS_6G))
 		sprintf(value, "%s", "SAS 6.0G");
 	if (map->page_00h[SFF8636_SAS_COMP_OFFSET] & (SFF8636_SAS_3G))
@@ -530,6 +534,8 @@ static void sff8636_show_transceiver(const struct sff8636_memory_map *map)
 		sprintf(value, "%s", "FC: 1600 MBytes/sec");
 	if (map->page_00h[SFF8636_FC_SPEED_OFFSET] & SFF8636_FC_SPEED_400_MBPS)
 		sprintf(value, "%s", "FC: 400 MBytes/sec");
+	if (map->page_00h[SFF8636_FC_SPEED_OFFSET] & SFF8636_FC_SPEED_3200_MBPS)
+		sprintf(value, "%s", "FC: 3200 MBytes/sec");
 	if (map->page_00h[SFF8636_FC_SPEED_OFFSET] & SFF8636_FC_SPEED_200_MBPS)
 		sprintf(value, "%s", "FC: 200 MBytes/sec");
 	if (map->page_00h[SFF8636_FC_SPEED_OFFSET] & SFF8636_FC_SPEED_100_MBPS)

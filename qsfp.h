@@ -217,6 +217,7 @@
 
 /* SAS/SATA Complaince Codes - 133 */
 #define	SFF8636_SAS_COMP_OFFSET		0x85
+#define	 SFF8636_SAS_24G			(1 << 7)
 #define	 SFF8636_SAS_12G			(1 << 6)
 #define	 SFF8636_SAS_6G				(1 << 5)
 #define	 SFF8636_SAS_3G				(1 << 4)
@@ -269,6 +270,7 @@
 #define	 SFF8636_FC_SPEED_800_MBPS		(1 << 6)
 #define	 SFF8636_FC_SPEED_1600_MBPS		(1 << 5)
 #define	 SFF8636_FC_SPEED_400_MBPS		(1 << 4)
+#define	 SFF8636_FC_SPEED_3200_MBPS		(1 << 3)
 #define	 SFF8636_FC_SPEED_200_MBPS		(1 << 2)
 #define	 SFF8636_FC_SPEED_100_MBPS		(1 << 0)
 
