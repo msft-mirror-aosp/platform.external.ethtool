@@ -73,7 +73,7 @@ static void sff8079_show_transceiver(const __u8 *id)
 	/* 10G Ethernet Compliance Codes */
 	if (id[3] & (1 << 7))
 		sprintf(value, "%s",
-			"10G Ethernet: 10G Base-LRM [SFF-8472 rev10.4 onwards]");
+			"10G Ethernet: 10G Base-ER [SFF-8472 rev10.4 onwards]");
 	if (id[3] & (1 << 6))
 		sprintf(value, "%s", "10G Ethernet: 10G Base-LRM");
 	if (id[3] & (1 << 5))
