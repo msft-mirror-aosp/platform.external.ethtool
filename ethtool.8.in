@@ -445,12 +445,27 @@ ethtool \- query or control network driver and hardware settings
 .A1 on off
 .BN msecs
 .RB ]
+.RB [
+.B short\-cable\-preset
+.A1 on off
+.RB ]
+.RB [
+.B lpf\-bandwidth
+.BN value
+.RB ]
+.RB [
+.B dsp\-eq\-init\-value
+.BN value
+.RB ]
 .HP
 .B ethtool \-\-get\-phy\-tunable
 .I devname
 .RB [ downshift ]
 .RB [ fast-link-down ]
 .RB [ energy-detect-power-down ]
+.RB [ short-cable-preset ]
+.RB [ lpf-bandwidth ]
+.RB [ dsp-eq-init-value ]
 .HP
 .B ethtool \-\-get\-tunable
 .I devname
@@ -1529,6 +1544,18 @@ lB	l.
 	value (in milliseconds) will be used by the PHY.
 .TE
 .TP
+.A2 short-cable-preset on off
+Specifies whether a PHY short-cable preset should be enabled (if supported).
+On KSZ87xx this is a global switch-wide preset and not a per-port setting.
+.TP
+.BI lpf-bandwidth \ value
+Sets PHY LPF bandwidth register value (if supported).
+On KSZ87xx this is a global switch-wide setting and not a per-port setting.
+.TP
+.BI dsp-eq-init-value \ value
+Sets PHY DSP EQ initial value register value (if supported).
+On KSZ87xx this is a global switch-wide setting and not a per-port setting.
+.TP
 .PD
 .RE
 .TP
@@ -1554,6 +1581,15 @@ Gets the PHY Fast Link Down status / period.
 .TP
 .B energy\-detect\-power\-down
 Gets the current configured setting for Energy Detect Power Down (if supported).
+.TP
+.B short\-cable\-preset
+Gets PHY short-cable preset status (if supported).
+.TP
+.B lpf\-bandwidth
+Gets PHY LPF bandwidth register value (if supported).
+.TP
+.B dsp\-eq\-init\-value
+Gets PHY DSP EQ initial value register value (if supported).
 
 .RE
 .TP

@@ -659,7 +659,7 @@ _ethtool_get_dump()
 _ethtool_get_phy_tunable()
 {
 	if [ "$cword" -eq 3 ]; then
-		COMPREPLY=( $( compgen -W downshift -- "$cur" ) )
+		COMPREPLY=( $( compgen -W 'downshift fast-link-down energy-detect-power-down short-cable-preset lpf-bandwidth dsp-eq-init-value' -- "$cur" ) )
 		return
 	fi
 }
@@ -1025,13 +1025,21 @@ _ethtool_set_phy_tunable()
 {
 	case "$cword" in
 		3)
-			COMPREPLY=( $( compgen -W downshift -- "$cur" ) )
+			COMPREPLY=( $( compgen -W 'downshift fast-link-down energy-detect-power-down short-cable-preset lpf-bandwidth dsp-eq-init-value' -- "$cur" ) )
 			return ;;
 		4)
-			COMPREPLY=( $( compgen -W 'on off' -- "$cur" ) )
+			case "${words[3]}" in
+				downshift|fast-link-down|energy-detect-power-down|short-cable-preset)
+					COMPREPLY=( $( compgen -W 'on off' -- "$cur" ) ) ;;
+			esac
 			return ;;
 		5)
-			COMPREPLY=( $( compgen -W count -- "$cur" ) )
+			case "${words[3]}" in
+				downshift)
+					COMPREPLY=( $( compgen -W count -- "$cur" ) ) ;;
+				fast-link-down|energy-detect-power-down)
+					COMPREPLY=( $( compgen -W msecs -- "$cur" ) ) ;;
+			esac
 			return ;;
 	esac
 }
