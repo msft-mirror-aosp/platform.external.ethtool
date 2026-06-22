@@ -214,7 +214,7 @@ static int eeprom_dump_hex(struct cmd_context *ctx)
 	return 0;
 }
 
-static int eeprom_parse(struct cmd_context *ctx, bool dump_pages)
+static int eeprom_parse(struct cmd_context *ctx, bool dump_pages __maybe_unused)
 {
 	struct ethtool_module_eeprom request = {
 		.length = 1,
