@@ -261,6 +261,17 @@ struct module_aw_chan {
 	__u8 adver_value;	/* Supported if (offset & value) != 0. */
 };
 
+struct module_eeprom_dump {
+	u32 offset;
+	u32 length;
+	u8 page;
+	u8 bank;
+	u8 i2c_address;
+	bool print_bank;
+	bool print_i2c;
+	const u8 *data;
+};
+
 extern const struct module_aw_mod module_aw_mod_flags[];
 extern const struct module_aw_chan module_aw_chan_flags[];
 
@@ -283,5 +294,6 @@ void module_show_identifier(const __u8 *id, int id_offset);
 void module_show_connector(const __u8 *id, int ctor_offset);
 void module_show_mit_compliance(u16 value);
 void module_show_dom_mod_lvl_monitors(const struct sff_diags *sd);
+void module_dump_eeprom_hex(const struct module_eeprom_dump *dump);
 
 #endif /* MODULE_COMMON_H__ */

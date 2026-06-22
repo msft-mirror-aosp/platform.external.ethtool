@@ -498,8 +498,54 @@ static int sff8079_get_eeprom_page(struct cmd_context *ctx, u8 i2c_address,
 	return ret;
 }
 
-int sff8079_show_all_nl(struct cmd_context *ctx)
+static void sff8079_hex_dump(struct cmd_context *ctx, const u8 *buf,
+			     bool a2h_present)
 {
+	struct module_eeprom_dump dump = {
+		.length = SFF8079_PAGE_SIZE,
+		.print_i2c = true,
+	};
+
+	new_json_obj(ctx->json);
+	if (is_json_context()) {
+		open_json_object(NULL);
+		open_json_array("pages", "");
+	}
+
+	dump.i2c_address = SFF8079_I2C_ADDRESS_LOW;
+	dump.data = buf;
+	module_dump_eeprom_hex(&dump);
+
+	if (a2h_present) {
+		dump.i2c_address = SFF8079_I2C_ADDRESS_HIGH;
+		dump.data = buf + ETH_MODULE_SFF_8079_LEN;
+		module_dump_eeprom_hex(&dump);
+	}
+
+	if (is_json_context()) {
+		close_json_array("");
+		close_json_object();
+	}
+	delete_json_obj();
+}
+
+static void sff8079_pretty_print(struct cmd_context *ctx, const u8 *buf,
+				 bool a2h_present)
+{
+	new_json_obj(ctx->json);
+	open_json_object(NULL);
+	sff8079_show_all_common(buf);
+
+	if (a2h_present)
+		sff8472_show_all(buf);
+
+	close_json_object();
+	delete_json_obj();
+}
+
+int sff8079_show_all_nl(struct cmd_context *ctx, bool dump_pages)
+{
+	bool a2h_present;
 	u8 *buf;
 	int ret;
 
@@ -516,26 +562,23 @@ int sff8079_show_all_nl(struct cmd_context *ctx)
 	if (ret)
 		goto out;
 
-	new_json_obj(ctx->json);
-	open_json_object(NULL);
-	sff8079_show_all_common(buf);
+	/* Check if A2h page is present */
+	a2h_present = buf[92] & (1 << 6);
 
-	/* Finish if A2h page is not present */
-	if (!(buf[92] & (1 << 6)))
-		goto out_json;
-
-	/* Read A2h page */
-	ret = sff8079_get_eeprom_page(ctx, SFF8079_I2C_ADDRESS_HIGH,
-				      buf + ETH_MODULE_SFF_8079_LEN);
-	if (ret) {
-		fprintf(stderr, "Failed to read Page A2h.\n");
-		goto out_json;
+	if (a2h_present) {
+		/* Read A2h page */
+		ret = sff8079_get_eeprom_page(ctx, SFF8079_I2C_ADDRESS_HIGH,
+					      buf + ETH_MODULE_SFF_8079_LEN);
+		if (ret) {
+			fprintf(stderr, "Failed to read Page A2h\n");
+			goto out;
+		}
 	}
 
-	sff8472_show_all(buf);
-out_json:
-	close_json_object();
-	delete_json_obj();
+	if (dump_pages)
+		sff8079_hex_dump(ctx, buf, a2h_present);
+	else
+		sff8079_pretty_print(ctx, buf, a2h_present);
 out:
 	free(buf);
 

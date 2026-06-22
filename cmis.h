@@ -201,6 +201,6 @@
 
 void cmis_show_all_ioctl(const __u8 *id);
 
-int cmis_show_all_nl(struct cmd_context *ctx);
+int cmis_show_all_nl(struct cmd_context *ctx, bool dump_pages);
 
 #endif /* CMIS_H__ */

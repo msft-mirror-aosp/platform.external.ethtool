@@ -6165,6 +6165,7 @@ static const struct option args[] = {
 		.help	= "Query/Decode Module EEPROM information and optical diagnostics if available",
 		.xhelp	= "		[ raw on|off ]\n"
 			  "		[ hex on|off ]\n"
+			  "		[ pages on|off ]\n"
 			  "		[ offset N ]\n"
 			  "		[ length N ]\n"
 			  "		[ page N ]\n"

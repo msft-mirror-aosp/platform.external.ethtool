@@ -671,11 +671,13 @@ _ethtool_module_info()
 		[hex]=1
 		[length]=1
 		[offset]=1
+		[pages]=1
 		[raw]=1
 	)
 
 	case "$prev" in
 		hex|\
+		pages|\
 		raw)
 			COMPREPLY=( $( compgen -W 'on off' -- "$cur" ) )
 			return ;;

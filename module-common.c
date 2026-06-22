@@ -656,3 +656,39 @@ void module_show_dom_mod_lvl_monitors(const struct sff_diags *sd)
 	PRINT_VCC_ALL("Module voltage", "module_voltage_measurement",
 		      sd->sfp_voltage[MCURR]);
 }
+
+/* Print one EEPROM memory block with a descriptive header followed by hex
+ * dump. The header is selected by the dump->print_i2c and dump->print_bank
+ * flags: "Page: 0xN" is always printed, an I2C-addressed block prints
+ * "I2C Address: 0xN" and a banked page prints "Bank: 0xN".
+ *
+ * In JSON context, all fields (bank, page, offset, i2c_address) are emitted
+ * unconditionally as a JSON object inside the enclosing "pages" array.
+ */
+void module_dump_eeprom_hex(const struct module_eeprom_dump *dump)
+{
+	u32 i;
+
+	if (is_json_context()) {
+		open_json_object(NULL);
+		print_uint(PRINT_JSON, "bank", "%u", dump->bank);
+		print_uint(PRINT_JSON, "page", "%u", dump->page);
+		print_uint(PRINT_JSON, "offset", "%u", dump->offset);
+		print_uint(PRINT_JSON, "i2c_address", "%u", dump->i2c_address);
+		open_json_array("data", "");
+		for (i = 0; i < dump->length; i++)
+			print_hex(PRINT_JSON, NULL, "%02x", dump->data[i]);
+		close_json_array("");
+		close_json_object();
+		return;
+	}
+
+	if (dump->print_i2c)
+		printf("I2C Address: 0x%02x\n", dump->i2c_address);
+	if (dump->print_bank)
+		printf("Bank: 0x%x\n", dump->bank);
+	printf("Page: 0x%x\n\n", dump->page);
+
+	dump_hex(stdout, dump->data, dump->length, dump->offset);
+	printf("\n");
+}
