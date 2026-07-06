@@ -1,3 +1,15 @@
+Version 7.1 - Jul 7, 2026
+	* Feature: track TX pause storm events (-I -a)
+	* Feature: update doc for ETHTOOL_PFC_PREVENTION_TOUT tunable
+	* Feature: RX CQE coalescing params (-c, -C)
+	* Feature: allow hex dump of all pages (-m)
+	* Feature: qsfp: support newer SFF-8636 compliance codes (-m)
+	* Feature: sfpid: support newer SFF-8636 compliance codes (-m)
+	* Fix: document --disable-netlink in help output (-h)
+	* Fix: add missing newlines in FEC output (--show-fec)
+	* Fix: sfpid: fix 10G Base-ER module detection (-m)
+	* Misc: clarify 10000baseCR link mode in man page
+
 Version 7.0 - Apr 28, 2026
 	* Feature: support MSE display (--show-mse)
 	* Feature: add 2 new link_ext_state names
