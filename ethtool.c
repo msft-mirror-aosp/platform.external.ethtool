@@ -5461,6 +5461,55 @@ static int do_get_phy_tunable(struct cmd_context *ctx)
 			fprintf(stdout,
 				"Energy Detect Power Down: enabled, TX %u msecs\n",
 				cont.msecs);
+	} else if (!strcmp(argp[0], "short-cable-preset")) {
+		struct {
+			struct ethtool_tunable tuna;
+			u8 enabled;
+		} cont;
+
+		cont.tuna.cmd = ETHTOOL_PHY_GTUNABLE;
+		cont.tuna.id = ETHTOOL_PHY_SHORT_CABLE_PRESET;
+		cont.tuna.type_id = ETHTOOL_TUNABLE_U8;
+		cont.tuna.len = 1;
+		if (send_ioctl(ctx, &cont.tuna) < 0) {
+			perror("Cannot Get PHY short-cable preset value");
+			return 87;
+		}
+
+		fprintf(stdout, "Short cable preset: %s\n",
+				cont.enabled ? "enabled" : "disabled");
+	} else if (!strcmp(argp[0], "lpf-bandwidth")) {
+		struct {
+			struct ethtool_tunable tuna;
+			u32 bw;
+		} cont;
+
+		cont.tuna.cmd = ETHTOOL_PHY_GTUNABLE;
+		cont.tuna.id = ETHTOOL_PHY_LPF_BW;
+		cont.tuna.type_id = ETHTOOL_TUNABLE_U32;
+		cont.tuna.len = 4;
+		if (send_ioctl(ctx, &cont.tuna) < 0) {
+			perror("Cannot Get PHY LPF bandwidth value");
+			return 87;
+		}
+
+		fprintf(stdout, "LPF bandwidth: %u\n", cont.bw);
+	} else if (!strcmp(argp[0], "dsp-eq-init-value")) {
+		struct {
+			struct ethtool_tunable tuna;
+			u32 eq;
+		} cont;
+
+		cont.tuna.cmd = ETHTOOL_PHY_GTUNABLE;
+		cont.tuna.id = ETHTOOL_PHY_DSP_EQ_INIT_VALUE;
+		cont.tuna.type_id = ETHTOOL_TUNABLE_U32;
+		cont.tuna.len = 4;
+		if (send_ioctl(ctx, &cont.tuna) < 0) {
+			perror("Cannot Get PHY DSP EQ init value");
+			return 87;
+		}
+
+		fprintf(stdout, "DSP EQ init value: %u\n", cont.eq);
 	} else {
 		exit_bad_args();
 	}
@@ -5625,6 +5674,18 @@ static int parse_named_u16(struct cmd_context *ctx, const char *name, u16 *val)
 	return ret;
 }
 
+static int parse_named_u32(struct cmd_context *ctx, const char *name, u32 *val)
+{
+	unsigned long long val1;
+	int ret;
+
+	ret = parse_named_uint(ctx, name, &val1, 0xffffffffULL);
+	if (ret)
+		*val = val1;
+
+	return ret;
+}
+
 static int do_set_phy_tunable(struct cmd_context *ctx)
 {
 	int err = 0;
@@ -5634,6 +5695,11 @@ static int do_set_phy_tunable(struct cmd_context *ctx)
 	u8 fld_msecs = ETHTOOL_PHY_FAST_LINK_DOWN_ON;
 	u8 edpd_changed = 0, edpd_enable = 0;
 	u16 edpd_tx_interval = ETHTOOL_PHY_EDPD_DFLT_TX_MSECS;
+	u8 scp_changed = 0, scp_enable = 0;
+	u8 lpf_bw_changed = 0;
+	u32 lpf_bw = 0;
+	u8 dsp_eq_init_changed = 0;
+	u32 dsp_eq_init = 0;
 
 	/* Parse arguments */
 	if (parse_named_bool(ctx, "downshift", &ds_enable)) {
@@ -5648,6 +5714,12 @@ static int do_set_phy_tunable(struct cmd_context *ctx)
 		edpd_changed = 1;
 		if (edpd_enable)
 			parse_named_u16(ctx, "msecs", &edpd_tx_interval);
+	} else if (parse_named_bool(ctx, "short-cable-preset", &scp_enable)) {
+		scp_changed = 1;
+	} else if (parse_named_u32(ctx, "lpf-bandwidth", &lpf_bw)) {
+		lpf_bw_changed = 1;
+	} else if (parse_named_u32(ctx, "dsp-eq-init-value", &dsp_eq_init)) {
+		dsp_eq_init_changed = 1;
 	} else {
 		exit_bad_args();
 	}
@@ -5731,6 +5803,54 @@ static int do_set_phy_tunable(struct cmd_context *ctx)
 		err = send_ioctl(ctx, &cont.fld);
 		if (err < 0) {
 			perror("Cannot Set PHY Energy Detect Power Down");
+			err = 87;
+		}
+	} else if (scp_changed) {
+		struct {
+			struct ethtool_tunable tuna;
+			u8 enabled;
+		} cont;
+
+		cont.tuna.cmd = ETHTOOL_PHY_STUNABLE;
+		cont.tuna.id = ETHTOOL_PHY_SHORT_CABLE_PRESET;
+		cont.tuna.type_id = ETHTOOL_TUNABLE_U8;
+		cont.tuna.len = 1;
+		cont.enabled = scp_enable;
+		err = send_ioctl(ctx, &cont.tuna);
+		if (err < 0) {
+			perror("Cannot Set PHY short-cable preset value");
+			err = 87;
+		}
+	} else if (lpf_bw_changed) {
+		struct {
+			struct ethtool_tunable tuna;
+			u32 bw;
+		} cont;
+
+		cont.tuna.cmd = ETHTOOL_PHY_STUNABLE;
+		cont.tuna.id = ETHTOOL_PHY_LPF_BW;
+		cont.tuna.type_id = ETHTOOL_TUNABLE_U32;
+		cont.tuna.len = 4;
+		cont.bw = lpf_bw;
+		err = send_ioctl(ctx, &cont.tuna);
+		if (err < 0) {
+			perror("Cannot Set PHY LPF bandwidth value");
+			err = 87;
+		}
+	} else if (dsp_eq_init_changed) {
+		struct {
+			struct ethtool_tunable tuna;
+			u32 eq;
+		} cont;
+
+		cont.tuna.cmd = ETHTOOL_PHY_STUNABLE;
+		cont.tuna.id = ETHTOOL_PHY_DSP_EQ_INIT_VALUE;
+		cont.tuna.type_id = ETHTOOL_TUNABLE_U32;
+		cont.tuna.len = 4;
+		cont.eq = dsp_eq_init;
+		err = send_ioctl(ctx, &cont.tuna);
+		if (err < 0) {
+			perror("Cannot Set PHY DSP EQ init value");
 			err = 87;
 		}
 	}
@@ -6196,6 +6316,9 @@ static const struct option args[] = {
 		.xhelp	= "		[ downshift on|off [count N] ]\n"
 			  "		[ fast-link-down on|off [msecs N] ]\n"
 			  "		[ energy-detect-power-down on|off [msecs N] ]\n"
+			  "		[ short-cable-preset on|off ]\n"
+			  "		[ lpf-bandwidth N ]\n"
+			  "		[ dsp-eq-init-value N ]\n"
 	},
 	{
 		.opts	= "--get-phy-tunable",
@@ -6204,6 +6327,9 @@ static const struct option args[] = {
 		.xhelp	= "		[ downshift ]\n"
 			  "		[ fast-link-down ]\n"
 			  "		[ energy-detect-power-down ]\n"
+			  "		[ short-cable-preset ]\n"
+			  "		[ lpf-bandwidth ]\n"
+			  "		[ dsp-eq-init-value ]\n"
 	},
 	{
 		.opts	= "--get-tunable",
